@@ -8,11 +8,15 @@
         'init without cache': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor({
-                        _loadCache: function (callback) {
-                            callback(null, {}, {});
-                        }
-                    });
+                    processor = new MockProcessor();
+
+                processor.overrides._loadCache = function (callback) {
+                    callback(null, {}, {});
+                };
+
+                processor.overrides._saveCache = function (inputs, outputs, callback) {
+                    callback();
+                };
 
                 processor._getFiles({
                     'abc.txt': { buffer: VALID_BUFFER, md5: VALID_MD5 }
@@ -35,18 +39,18 @@
         'init with some cached but no deleted files': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor({
-                        _loadCache: function (callback) {
-                            callback(
-                                null,
-                                {
-                                    'unchanged.txt': { md5: 'unchanged' },
-                                    'changed.txt': { md5: 'changed-old' }
-                                },
-                                {}
-                            );
-                        }
-                    });
+                    processor = new MockProcessor();
+
+                processor.overrides._loadCache = function (callback) {
+                    callback(
+                        null,
+                        {
+                            'unchanged.txt': { md5: 'unchanged' },
+                            'changed.txt': { md5: 'changed-old' }
+                        },
+                        {}
+                    );
+                };
 
                 processor._getFiles({
                     'unchanged.txt': { buffer: VALID_BUFFER, md5: 'unchanged' },
@@ -67,18 +71,18 @@
         'init with a deleted file': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor({
-                        _loadCache: function (callback) {
-                            callback(
-                                null,
-                                {
-                                    'unchanged.txt': { md5: 'unchanged' },
-                                    'deleted.txt': { md5: 'deleted' }
-                                },
-                                {}
-                            );
-                        }
-                    });
+                    processor = new MockProcessor();
+
+                processor.overrides._loadCache = function (callback) {
+                    callback(
+                        null,
+                        {
+                            'unchanged.txt': { md5: 'unchanged' },
+                            'deleted.txt': { md5: 'deleted' }
+                        },
+                        {}
+                    );
+                };
 
                 processor._getFiles({
                     'unchanged.txt': { buffer: VALID_BUFFER, md5: 'unchanged' }

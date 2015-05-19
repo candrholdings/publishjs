@@ -25,7 +25,7 @@
     };
 
     Processor.prototype._getCachePath = function () {
-        return path.resolve(that.options.temp, that._sessionID);
+        return path.resolve(this.options.temp, this._sessionID);
     };
 
     Processor.prototype._loadCache = function (callback) {
