@@ -1,4 +1,4 @@
-!function (linq, path, pipe) {
+!function (async, linq, path, pipe) {
     'use strict';
 
     var DEFAULT_PLUGINS = {
@@ -15,6 +15,23 @@
 
         Object.getOwnPropertyNames(options.plugins).forEach(function (name, module) {
             actions[name] = function () {
+                var args = [].slice.call(arguments),
+                    files = args.shift(),
+                    callback = args.pop(),
+                    processor = new module(options, '0');
+
+                async.series([
+                    function (callback) {
+                        processor._init(files, callback);
+                    },
+                    function (callback) {
+                        processor.run(callback);
+                    },
+                    function (callback) {
+                        processor._flush(callback);
+                    }
+                ], function (err) {
+                });
             };
         });
 
@@ -25,6 +42,7 @@
         return new PublishJS(options || {});
     };
 }(
+    require('async'),
     require('async-linq'),
     require('path'),
     require('./pipe')

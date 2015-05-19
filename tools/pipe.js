@@ -68,7 +68,11 @@
                 }
             });
 
-            frame.fn.apply(self, args);
+            try {
+                frame.fn.apply(self, args);
+            } catch (ex) {
+                callback(ex);
+            }
         } else {
             callback.call(self, null, input);
         }
