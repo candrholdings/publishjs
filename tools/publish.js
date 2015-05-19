@@ -1,41 +1,40 @@
-!function (async, linq, path, pipe) {
+!function (async, linq, path, Pipe, Processor) {
     'use strict';
 
-    var DEFAULT_PLUGINS = {
-        from: require('./from')
+    var DEFAULT_PROCESSORS = {
+        // from: require('./from')
     };
 
     function PublishJS(options) {
-        options.basedir || (options.basedir = path.resolve('.');
+        options.basedir || (options.basedir = path.resolve('.'));
         options.output || (options.output = 'publish/');
         options.temp || (options.temp = 'temp/');
-        options.plugins = linq(DEFAULT_PLUGINS).concat(options.plugins || {});
+        options.processors = linq(DEFAULT_PROCESSORS).concat(options.processors || {}).run();
 
         var actions = {};
 
-        Object.getOwnPropertyNames(options.plugins).forEach(function (name, module) {
+        Object.getOwnPropertyNames(options.processors).forEach(function (name) {
+            var CustomProcessor = options.processors[name];
+
+            if (typeof CustomProcessor !== 'function') {
+                throw new Error('options.processors["' + name + '"] should be a function, instead of ' + CustomProcessor);
+            }
+
             actions[name] = function () {
                 var args = [].slice.call(arguments),
-                    files = args.shift(),
+                    files = args.shift() || {},
                     callback = args.pop(),
-                    processor = new module(options, '0');
+                    processor = new CustomProcessor(options, '0', name);
 
-                async.series([
-                    function (callback) {
-                        processor._init(files, callback);
-                    },
-                    function (callback) {
-                        processor.run(callback);
-                    },
-                    function (callback) {
-                        processor._flush(callback);
-                    }
-                ], function (err) {
-                });
+                if (!(processor instanceof Processor)) {
+                    return callback(new Error('options.processors["' + name + '"] must subclass Processor'));
+                }
+
+                processor._run(files, args, callback);
             };
         });
 
-        options.pipe = pipe();
+        this.pipe = new Pipe(actions, options);
     }
 
     module.exports = function (options) {
@@ -45,5 +44,6 @@
     require('async'),
     require('async-linq'),
     require('path'),
-    require('./pipe')
+    require('./pipe'),
+    require('./processor')
 );

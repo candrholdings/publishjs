@@ -9,7 +9,7 @@
 
     require('util').inherits(MockProcessor, Processor);
 
-    ['_loadCache', '_saveCache', 'work'].forEach(function (name) {
+    ['_loadCache', '_saveCache', 'run'].forEach(function (name) {
         MockProcessor.prototype[name] = function () {
             (this.overrides[name] || this[name]).apply(this, arguments);
         };

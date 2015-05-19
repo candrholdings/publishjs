@@ -1,7 +1,7 @@
 !function (assert, MockProcessor) {
     'use strict';
 
-    var VALID_CONTENT = new Buffer('abc').toString('base64'),
+    var VALID_BUFFER = new Buffer('abc'),
         VALID_MD5 = new Buffer('xyz').toString('hex');
 
     require('vows').describe('Processor init function').addBatch({
@@ -14,21 +14,21 @@
                         }
                     });
 
-                processor._init({
-                    'abc.txt': { content: VALID_CONTENT, md5: VALID_MD5 }
-                }, function (err) {
-                    callback(err, err ? null : processor);
-                });
+                processor._getFiles({
+                    'abc.txt': { buffer: VALID_BUFFER, md5: VALID_MD5 }
+                }, callback);
             },
 
             'should returns all inputs as changed': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.newOrChangedFiles).length, 1);
-                assert.equal(topic.newOrChangedFiles['abc.txt'].content, VALID_CONTENT);
-                assert.equal(topic.newOrChangedFiles['abc.txt'].md5, VALID_MD5);
+                var newOrChanged = topic.inputs.newOrChanged;
+
+                assert.equal(Object.getOwnPropertyNames(newOrChanged).length, 1);
+                assert.equal(newOrChanged['abc.txt'].buffer.toString(), VALID_BUFFER.toString());
+                assert.equal(newOrChanged['abc.txt'].md5, VALID_MD5);
             },
 
             'should returns no inputs as unchanged': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.unchangedFiles).length, 0);
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).length, 0);
             }
         },
 
@@ -48,21 +48,19 @@
                         }
                     });
 
-                processor._init({
-                    'unchanged.txt': { content: VALID_CONTENT, md5: 'unchanged' },
-                    'changed.txt': { content: VALID_CONTENT, md5: 'changed-new' },
-                    'new.txt': { content: VALID_CONTENT, md5: 'new' },
-                }, function (err) {
-                    callback(err, err ? null : processor);
-                });
+                processor._getFiles({
+                    'unchanged.txt': { buffer: VALID_BUFFER, md5: 'unchanged' },
+                    'changed.txt': { buffer: VALID_BUFFER, md5: 'changed-new' },
+                    'new.txt': { buffer: VALID_BUFFER, md5: 'new' },
+                }, callback);
             },
 
             'should returns cache hit as unchanged': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.unchangedFiles).sort().join(','), 'unchanged.txt');
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).sort().join(','), 'unchanged.txt');
             },
 
             'should returns cache miss as changed': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.newOrChangedFiles).sort().join(','), 'changed.txt,new.txt');
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.newOrChanged).sort().join(','), 'changed.txt,new.txt');
             }
         },
 
@@ -82,19 +80,17 @@
                         }
                     });
 
-                processor._init({
-                    'unchanged.txt': { content: VALID_CONTENT, md5: 'unchanged' }
-                }, function (err) {
-                    callback(err, err ? null : processor);
-                });
+                processor._getFiles({
+                    'unchanged.txt': { buffer: VALID_BUFFER, md5: 'unchanged' }
+                }, callback);
             },
 
             'should returns all as changed': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.newOrChangedFiles).sort().join(','), 'unchanged.txt');
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.newOrChanged).sort().join(','), 'unchanged.txt');
             },
 
             'should returns nothing as unchanged': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.unchangedFiles).length, 0);
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).length, 0);
             }
         }
     }).export(module);

@@ -1,13 +1,13 @@
 !function (assert, Processor) {
     'use strict';
 
-    var VALID_CONTENT = new Buffer('abc').toString('base64'),
+    var VALID_BUFFER = new Buffer('abc'),
         VALID_MD5 = new Buffer('xyz').toString('hex');
 
     require('vows').describe('Processor utility functions').addBatch({
         'when checking for valid file entry': {
             topic: Processor.validFileEntry({
-                content: VALID_CONTENT,
+                buffer: VALID_BUFFER,
                 md5: VALID_MD5
             }),
 
@@ -25,7 +25,7 @@
         },
 
         'when checking for file entry without md5': {
-            topic: Processor.validFileEntry({ content: VALID_CONTENT }),
+            topic: Processor.validFileEntry({ buffer: VALID_BUFFER }),
 
             'should return falsy': function (topic) {
                 assert(!topic);
@@ -33,7 +33,7 @@
         },
 
         'when checking for file entry with additional entries': {
-            topic: Processor.validFileEntry({ content: VALID_CONTENT, md5: VALID_MD5, extra: 1 }),
+            topic: Processor.validFileEntry({ buffer: VALID_BUFFER, md5: VALID_MD5, extra: 1 }),
 
             'should return falsy': function (topic) {
                 assert(!topic);
@@ -44,7 +44,7 @@
             topic: function () {
                 var fileEntry = new Date();
 
-                fileEntry.content = VALID_CONTENT;
+                fileEntry.buffer = VALID_BUFFER;
                 fileEntry.md5 = VALID_MD5;
 
                 this.callback(null, Processor.validFileEntry(fileEntry));

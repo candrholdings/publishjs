@@ -4,41 +4,37 @@
     require('vows').describe('Processor flush function').addBatch({
         'Flush a file': {
             topic: function () {
-                var topicCallback = this.callback,
-                    processor = new MockProcessor();
+                var callback = this.callback,
+                    processor = new MockProcessor(),
+                    topic = {};
 
                 processor.overrides._loadCache = function (callback) {
                     callback(null, {
                         'unchange.txt': { md5: 'unchange' }
                     }, {
-                        'output.txt': { md5: 'output.old', content: 'output.old' }
+                        'output.txt': { md5: 'output.old', buffer: new Buffer('output.old') }
                     });
                 };
 
                 processor.overrides._saveCache = function (inputs, outputs, callback) {
-                    callback();
-                    topicCallback(null, { inputs: inputs, outputs: outputs });
-                };
+                    topic.inputs = inputs;
+                    topic.outputs = outputs;
 
-                processor.overrides.work = function (callback) {
-                    this.write('new.txt', 'afterwork-new');
                     callback();
                 };
 
-                async.series([
-                    function (callback) {
-                        processor._init({
-                            'unchange.txt': { md5: 'unchange', content: 'unchange' },
-                            'new.txt': { md5: 'beforework-new', content: 'new' }
-                        }, callback);
-                    },
-                    function (callback) {
-                        processor.work(callback);
-                    },
-                    function (callback) {
-                        processor._flush(callback);
-                    }
-                ]);
+                processor.overrides.run = function (inputs, outputs, callback) {
+                    outputs['new.txt'] = 'afterwork-new';
+
+                    callback(null, outputs);
+                };
+
+                processor._run({
+                    'unchange.txt': { md5: 'unchange', buffer: new Buffer('unchange') },
+                    'new.txt': { md5: 'beforework-new', buffer: new Buffer('new') }
+                }, [], function (err) {
+                    callback(err, err ? null : topic);
+                });
             },
 
             'should retains md5 of inputs': function (topic) {
@@ -53,10 +49,10 @@
                 var outputs = topic.outputs;
 
                 assert.equal(linq(outputs).count().run(), 2);
-                assert.equal(outputs['output.txt'].md5, 'output.old');
-                assert.equal(outputs['output.txt'].content, 'output.old');
+                assert.equal(outputs['output.txt'].md5, md5('output.old'));
+                assert.equal(outputs['output.txt'].buffer.toString(), 'output.old');
                 assert.equal(outputs['new.txt'].md5, md5('afterwork-new'));
-                assert.equal(outputs['new.txt'].content, new Buffer('afterwork-new').toString('base64'));
+                assert.equal(outputs['new.txt'].buffer.toString(), 'afterwork-new');
             }
         }
     }).export(module);

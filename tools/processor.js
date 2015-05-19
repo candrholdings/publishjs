@@ -1,8 +1,13 @@
-!function (crypto, fs, linq, path) {
+!function (async, crypto, fs, linq, path) {
     'use strict';
 
-    function Processor(options, sessionID) {
-        this._options = options;
+    function Processor(options, sessionID, name) {
+        if (arguments.length !== 3) {
+            throw new Error('Implementor of Processor must pass arguments on constructor');
+        }
+
+        this.options = options;
+        this._name = name;
         this._sessionID = sessionID;
     }
 
@@ -13,14 +18,14 @@
     Processor.validFileEntry = function (fileEntry) {
         return (
             Processor.isPlainObject(fileEntry) &&
-            Object.getOwnPropertyNames(fileEntry).sort().join(',') === 'content,md5' &&
-            typeof fileEntry.content === 'string' &&
+            Object.getOwnPropertyNames(fileEntry).sort().join(',') === 'buffer,md5' &&
+            fileEntry.buffer instanceof Buffer &&
             typeof fileEntry.md5 === 'string'
         );
     };
 
     Processor.prototype._getCachePath = function () {
-        return path.resolve(that._options.temp, that._sessionID);
+        return path.resolve(that.options.temp, that._sessionID);
     };
 
     Processor.prototype._loadCache = function (callback) {
@@ -33,77 +38,140 @@
         fs.writeFile(this._getCachePath(), { inputs: inputs, outputs: outputs }, callback);
     };
 
-    Processor.prototype._init = function (files, callback) {
+    Processor.prototype._getFiles = function (files, callback) {
         var that = this;
 
         if ({}.toString.call(files) !== '[object Object]') {
-            callback(new Error('files not a plain object'));
+            return callback(new Error('files not a plain object'));
         } else if (!linq(files).all(Processor.validFileEntry).run()) {
-            callback(new Error('One or more entry in files is invalid'));
+            return callback(new Error('One or more entry in files is invalid'));
         }
-
-        that._inputs = files;
 
         this._loadCache(function (err, inputCache, outputCache) {
             if (err) { return callback(err); }
 
-            var anyFilesDeleted = linq(inputCache).any(function (_, filename) { return !files[filename]; }).run();
+            var anyFilesDeleted = linq(inputCache).any(function (_, filename) { return !files[filename]; }).run(),
+                newOrChanged,
+                existingOutputs;
 
             if (anyFilesDeleted) {
                 // If there are any files deleted, we will need to mark all files as changed and re-run the whole processor
 
-                that.newOrChangedFiles = files;
-                that._outputs = {};
+                newOrChanged = files;
+                existingOutputs = {};
             } else {
                 // If there are only new or changed files, we will re-use the outputs from cache
                 // Processors will decide if they want to rerun on existing files
 
-                that.newOrChangedFiles = linq(files).where(function (entry, filename) {
+                newOrChanged = linq(files).where(function (entry, filename) {
                     var cached = inputCache[filename];
 
                     return !cached || cached.md5 !== entry.md5;
                 }).run();
 
-                that._outputs = outputCache;
+                existingOutputs = outputCache;
             }
 
-            that.unchangedFiles = linq(files).except(that.newOrChangedFiles).run();
-
-            callback();
+            callback(null, {
+                inputs: {
+                    all: files,
+                    newOrChanged: newOrChanged,
+                    unchanged: linq(files).except(newOrChanged).run()
+                },
+                outputs: {
+                    existing: existingOutputs
+                }
+            });
         });
     };
 
-    Processor.prototype._flush = function (callback) {
-        var inputs = linq(this._inputs).select(function (input) {
-                return { md5: input.md5 };
-            }).run();
-
-        this._saveCache(inputs, this._outputs, callback);
+    Processor.prototype._flush = function (inputs, outputs, callback) {
+        this._saveCache(inputs, outputs, callback);
     };
 
-    Processor.prototype.run = function (callback) {
-        if (!this._inputs) { return callback(new Error('Processor cache is not initialized yet')); }
+    Processor.prototype._run = function (inputs, args, callback) {
+        var that = this;
+
+        async.auto({
+            files: function (callback) {
+                that._getFiles(inputs, callback);
+            },
+            run: ['files', function (callback, results) {
+                var files = results.files,
+                    runArgs = [].slice.call(args || []);
+
+                runArgs.splice(0, 0, files.inputs, linq(files.outputs.existing).select(function (output) {
+                    return output.buffer;
+                }).run());
+
+                runArgs.push(callback);
+
+                that.run.apply(that, runArgs);
+            }],
+            inputs: ['files', function (callback, results) {
+                callback(null, linq(results.files.inputs.all).select(function (entry) {
+                    return { md5: entry.md5 };
+                }).run());
+            }],
+            outputs: ['run', function (callback, results) {
+                var outputs = {},
+                    err;
+
+                if (!results.run) {
+                    return callback(new Error('Processor#' + that._name + '.run must return output files or an empty map'));
+                } else if (!Processor.isPlainObject(results.run)) {
+                    return callback(new Error('Processor#' + that._name + '.run must return plain object as output'));
+                }
+
+                Object.getOwnPropertyNames(results.run).forEach(function (filename) {
+                    var buffer = results.run[filename];
+
+                    if (typeof buffer === 'string') {
+                        buffer = new Buffer(buffer);
+                    } else if (!(buffer instanceof Buffer)) {
+                        err = new Error('Processor#' + that._name + ' output "' + filename + '" must be either string or Buffer');
+
+                        return;
+                    }
+
+                    outputs[filename] = {
+                        buffer: buffer,
+                        md5: md5(buffer)
+                    };
+                });
+
+                callback(err, err ? null : outputs);
+            }],
+            flush: ['inputs', 'outputs', function (callback, results) {
+                that._flush(
+                    results.inputs,
+                    results.outputs,
+                    callback
+                );
+            }]
+        }, function (err, results) {
+            callback(err, results.outputs);
+        });
     };
 
-    Processor.prototype.write = function (filename, content) {
-        if (typeof content === 'string') {
-            content = new Buffer(content);
-        } else if (!(content instanceof Buffer)) {
-            throw new Error('content must be either String or Buffer');
-        }
+    // run(inputs, outputs, arg0, arg1, ..., argN, callback)
+    Processor.prototype.run = function () {
+        var callback = arguments[arguments.length - 1];
 
+        callback(new Error('"run" function must be implemented'));
+    };
+
+    function md5(bufferOrString) {
         var md5 = crypto.createHash('md5');
 
-        md5.update(content);
+        md5.update(typeof bufferOrString === 'string' ? new Buffer(bufferOrString) : bufferOrString);
 
-        this._outputs[filename] = {
-            content: content.toString('base64'),
-            md5: md5.digest('hex')
-        };
-    };
+        return md5.digest('hex');
+    }
 
     module.exports = Processor;
 }(
+    require('async'),
     require('crypto'),
     require('fs'),
     require('async-linq'),

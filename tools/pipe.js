@@ -3,7 +3,7 @@
 !function () {
     'use strict';
 
-    exports.Pipe = Pipe;
+    module.exports = Pipe;
     exports.PipeContext = PipeContext;
 
     function Pipe(actions, options) {
