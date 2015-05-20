@@ -1,4 +1,4 @@
-!function (async, Immutable, linq, path, Pipe, Processor) {
+!function (async, FileSystemCache, Immutable, linq, path, Pipe, Processor) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -14,7 +14,17 @@
                     linq(DEFAULT_PROCESSORS).concat(options.get('processors') || {}).run()
                 )
                 .update('cache', function (cache) {
-                    return (cache === false || cache) ? cache : new require('./filesystemcache');
+                    if (cache === false) {
+                        return cache;
+                    } else if (!cache) {
+                        return new FileSystemCache();
+                    } else if (typeof cache === 'string') {
+                        return new FileSystemCache({ tempdir: cache });
+                    } else if (cache instanceof require('./cacheprovider')) {
+                        return cache;
+                    } else {
+                        throw new Error('cache must either be string or base from CacheProvider');
+                    }
                 });
         });
 
@@ -92,6 +102,7 @@
     };
 }(
     require('async'),
+    require('./filesystemcache'),
     require('immutable'),
     require('async-linq'),
     require('path'),
