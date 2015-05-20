@@ -1,4 +1,4 @@
-!function (assert, PublishJS, Processor, linq) {
+!function (assert, Processor, linq) {
     'use strict';
 
     function TransformProcessor() {
@@ -21,7 +21,7 @@
         'when chaining two processors': {
             topic: function () {
                 var callback = this.callback,
-                    publish = new PublishJS({
+                    publish = require('../publish')({
                         cache: false,
                         processors: {
                             transform: TransformProcessor,
@@ -56,7 +56,6 @@
     }).export(module);
 }(
     require('assert'),
-    require('../publish'),
     require('../processor'),
     require('async-linq')
 );

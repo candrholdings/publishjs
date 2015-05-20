@@ -1,4 +1,4 @@
-!function (assert, async, PublishJS, Processor, linq) {
+!function (assert, async, Processor, linq) {
     'use strict';
 
     require('vows').describe('Processor quick create test').addBatch({
@@ -24,7 +24,7 @@
                         output: require('./lib/outputprocessor')
                     };
 
-                new PublishJS({ cache: false, processors: processors }).build([
+                require('../publish')({ cache: false, processors: processors }).build([
                     function (pipe, callback) {
                         pipe.input(inputs)
                             .append('.1')
@@ -45,7 +45,6 @@
 }(
     require('assert'),
     require('async'),
-    require('../publish'),
     require('../processor'),
     require('async-linq')
 );

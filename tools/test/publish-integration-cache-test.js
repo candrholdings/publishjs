@@ -1,4 +1,4 @@
-!function (assert, async, PublishJS, Processor, linq) {
+!function (assert, async, Processor, linq) {
     'use strict';
 
     function AppendProcessor() {
@@ -34,7 +34,7 @@
 
                 async.series([
                     function (callback) {
-                        new PublishJS({ cache: cache, processors: processors }).build([
+                        require('../publish')({ cache: cache, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')
@@ -44,7 +44,7 @@
                         ], callback);
                     },
                     function (callback) {
-                        new PublishJS({ cache: cache, processors: processors }).build([
+                        require('../publish')({ cache: cache, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')
@@ -67,7 +67,6 @@
 }(
     require('assert'),
     require('async'),
-    require('../publish'),
     require('../processor'),
     require('async-linq')
 );

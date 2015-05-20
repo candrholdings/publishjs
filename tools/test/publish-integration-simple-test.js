@@ -1,4 +1,4 @@
-!function (assert, PublishJS, Processor, linq) {
+!function (assert, Processor, linq) {
     'use strict';
 
     function DummyProcessor() {
@@ -28,7 +28,7 @@
         'when chaining a single action': {
             topic: function () {
                 var callback = this.callback,
-                    publish = new PublishJS({
+                    publish = require('../publish')({
                         cache: false,
                         processors: {
                             dummy: DummyProcessor,
@@ -57,7 +57,6 @@
     }).export(module);
 }(
     require('assert'),
-    require('../publish'),
     require('../processor'),
     require('async-linq')
 );
