@@ -41,7 +41,7 @@
                     topic = {};
 
                 publish.build(function (pipe, callback) {
-                    pipe.input({ 'abc.txt': new Buffer('ABC') })
+                    pipe.input({ 'abc.txt': 'ABC' })
                         .dummy('dummy-arg1', 'dummy-arg2')
                         .output(topic)
                         .run(callback);
@@ -51,8 +51,6 @@
             },
 
             'should returns output': function (topic) {
-                console.log(topic);
-
                 assert.equal(Object.getOwnPropertyNames(topic).length, 1);
                 assert.equal(topic['abc.txt.dummy'].toString(), 'ABC.dummy');
             }

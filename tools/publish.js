@@ -40,7 +40,11 @@
                     return callback(new Error('options.processors["' + name + '"] must subclass Processor'));
                 }
 
-                processor._run(files, args, callback);
+                try {
+                    processor._run(files, args, callback);
+                } catch (ex) {
+                    callback(ex);
+                }
             };
         });
     }
