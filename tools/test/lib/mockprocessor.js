@@ -31,10 +31,14 @@
         };
     });
 
-    MockProcessor.Cache = {};
-
     MockProcessor.prototype._getMockCache = function () {
-        return MockProcessor.Cache[this._sessionID] || (MockProcessor.Cache[this._sessionID] = { inputs: {}, outputs: {} });
+        return MockProcessor.cache[this._sessionID] || (MockProcessor.cache[this._sessionID] = { inputs: {}, outputs: {} });
+    };
+
+    MockProcessor.cache = {};
+
+    MockProcessor.cleanup = function () {
+        MockProcessor.cache = {};
     };
 
     module.exports = MockProcessor;

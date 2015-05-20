@@ -19,9 +19,11 @@
         callback(null, outputs);
     };
 
-    require('vows').describe('PublishJS integration test').addBatch({
+    require('vows').describe('PublishJS cache integration test').addBatch({
         'when repeating an action for 2 times': {
             topic: function () {
+                MockProcessor.cleanup();
+
                 var callback = this.callback,
                     topic,
                     inputs = {

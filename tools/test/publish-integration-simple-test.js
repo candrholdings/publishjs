@@ -1,21 +1,13 @@
-!function (assert, PublishJS, Processor, linq) {
+!function (assert, PublishJS, MockProcessor, linq) {
     'use strict';
 
     function DummyProcessor() {
         var that = this;
 
-        Processor.apply(that, arguments);
+        MockProcessor.apply(that, arguments);
     }
 
-    require('util').inherits(DummyProcessor, Processor);
-
-    DummyProcessor.prototype._loadCache = function (callback) {
-        callback(null, {}, {});
-    };
-
-    DummyProcessor.prototype._saveCache = function (inputs, outputs, callback) {
-        callback();
-    };
+    require('util').inherits(DummyProcessor, MockProcessor);
 
     DummyProcessor.prototype.run = function (inputs, outputs, arg1, arg2, callback) {
         var that = this;
@@ -32,9 +24,11 @@
         callback(null, outputs);
     };
 
-    require('vows').describe('PublishJS integration test').addBatch({
+    require('vows').describe('PublishJS simple integration test').addBatch({
         'when chaining a single action': {
             topic: function () {
+                MockProcessor.cleanup();
+
                 var callback = this.callback,
                     publish = new PublishJS({
                         processors: {
@@ -57,6 +51,8 @@
             },
 
             'should returns output': function (topic) {
+                console.log(topic);
+
                 assert.equal(Object.getOwnPropertyNames(topic).length, 1);
                 assert.equal(topic['abc.txt.dummy'].toString(), 'ABC.dummy');
             }
@@ -65,6 +61,6 @@
 }(
     require('assert'),
     require('../publish'),
-    require('../processor'),
+    require('./lib/mockprocessor'),
     require('async-linq')
 );
