@@ -26,8 +26,8 @@
 
             'should read all file contents': function (topic) {
                 assert.equal(topic['abc.txt'], '123');
-                assert.equal(topic['def.txt'], '456');
-                assert.equal(topic['xyz.txt'], '789');
+                assert.equal(topic['dir-def/def.txt'], '456');
+                assert.equal(topic['dir-xyz-1/dir-xyz-2/xyz.txt'], '789');
             }
         }
     }).export(module);

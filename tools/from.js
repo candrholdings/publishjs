@@ -28,7 +28,7 @@
                     if (err) { return callback(err); }
 
                     files = linq(files).toDictionary(function (filename) {
-                        return path.join(dir, filename);
+                        return path.join(dir, filename).replace(/\\/g, '/');
                     }).run();
 
                     linq(files)
