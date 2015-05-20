@@ -3,9 +3,6 @@
 !function () {
     'use strict';
 
-    module.exports = Pipe;
-    exports.PipeContext = PipeContext;
-
     function Pipe(actions, options) {
         var self = this;
 
@@ -79,6 +76,9 @@
     };
 
     function makeArray(array) {
-        return Array.prototype.slice.call(array);
+        return [].slice.call(array);
     }
+
+    module.exports = Pipe;
+    Pipe.PipeContext = PipeContext;
 }();

@@ -61,7 +61,7 @@
                 existingOutputs = {};
             } else {
                 // If there are only new or changed files, we will re-use the outputs from cache
-                // Processors will decide if they want to rerun on existing files
+                // Processors will decide if they want to re-process existing files
 
                 newOrChanged = linq(files).where(function (entry, filename) {
                     var cached = inputCache[filename];

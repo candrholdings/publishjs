@@ -1,25 +1,20 @@
-!function (Processor) {
+!function (MockProcessor, linq) {
     'use strict';
 
     function InputProcessor() {
-        Processor.apply(this, arguments);
+        MockProcessor.apply(this, arguments);
     }
 
-    require('util').inherits(InputProcessor, Processor);
-
-    InputProcessor.prototype._loadCache = function (callback) {
-        callback(null, {}, {});
-    };
-
-    InputProcessor.prototype._saveCache = function (inputs, outputs, callback) {
-        callback();
-    };
+    require('util').inherits(InputProcessor, MockProcessor);
 
     InputProcessor.prototype.run = function (inputs, outputs, files, callback) {
-        callback(null, files);
+        callback(null, linq(files).select(function (bufferOrString) {
+            return typeof bufferOrString === 'string' ? new Buffer(bufferOrString) : bufferOrString;
+        }).run());
     };
 
     module.exports = InputProcessor;
 }(
-    require('../../processor')
+    require('./mockprocessor'),
+    require('async-linq')
 );

@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "async": "^0.9.2",
-    "async-linq": "^1.0.2"
+    "async-linq": "^1.0.2",
+    "immutable": "^3.7.3"
   },
   "devDependencies": {
     "vows": "^0.8.1"

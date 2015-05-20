@@ -1,22 +1,22 @@
-!function (linq, Processor) {
+!function (linq, MockProcessor) {
     'use strict';
 
     function OutputProcessor() {
-        Processor.apply(this, arguments);
+        MockProcessor.apply(this, arguments);
     }
 
-    require('util').inherits(OutputProcessor, Processor);
+    require('util').inherits(OutputProcessor, MockProcessor);
 
-    OutputProcessor.prototype._loadCache = function (callback) { callback(null, {}, {}); };
-    OutputProcessor.prototype._saveCache = function (inputs, outputs, callback) { callback(); };
+    OutputProcessor.prototype.run = function (inputs, outputs, fileSystem, callback) {
+        Object.getOwnPropertyNames(inputs.all).forEach(function (filename) {
+            fileSystem[filename] = inputs.all[filename].buffer;
+        });
 
-    OutputProcessor.prototype.run = function (inputs, outputs, outputCallback, callback) {
-        outputCallback(linq(inputs.all).select(function (entry) { return entry.buffer; }).run());
         callback(null, outputs);
     };
 
     module.exports = OutputProcessor;
 }(
     require('async-linq'),
-    require('../../processor')
+    require('./mockprocessor')
 );

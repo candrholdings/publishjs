@@ -33,7 +33,7 @@
     };
 
     require('vows').describe('PublishJS integration test').addBatch({
-        'when adding a single action': {
+        'when chaining a single action': {
             topic: function () {
                 var callback = this.callback,
                     publish = new PublishJS({
@@ -44,19 +44,16 @@
                         },
                         assertion: '123'
                     }),
-                    pipe = publish.pipe,
-                    topic;
+                    topic = {};
 
-                pipe.input({
-                        'abc.txt': new Buffer('ABC')
-                    })
-                    .dummy('dummy-arg1', 'dummy-arg2')
-                    .output(function (outputs) {
-                        topic = outputs;
-                    })
-                    .run(function (err) {
-                        callback(err, err ? null : topic);
-                    });
+                publish.build(function (pipe, callback) {
+                    pipe.input({ 'abc.txt': new Buffer('ABC') })
+                        .dummy('dummy-arg1', 'dummy-arg2')
+                        .output(topic)
+                        .run(callback);
+                }, function (err) {
+                    callback(err, err ? null : topic);
+                });
             },
 
             'should returns output': function (topic) {
