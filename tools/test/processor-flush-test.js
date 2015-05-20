@@ -1,14 +1,14 @@
-!function (assert, async, linq, MockProcessor) {
+!function (assert, async, linq, Processor) {
     'use strict';
 
     require('vows').describe('Processor flush function').addBatch({
         'Flush a file': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor(),
-                    topic = {};
+                    topic = {},
+                    processor = new Processor();
 
-                processor.overrides._loadCache = function (callback) {
+                processor._loadCache = function (callback) {
                     callback(null, {
                         'unchange.txt': { md5: 'unchange' }
                     }, {
@@ -16,20 +16,20 @@
                     });
                 };
 
-                processor.overrides._saveCache = function (inputs, outputs, callback) {
+                processor._saveCache = function (inputs, outputs, callback) {
                     topic.inputs = inputs;
                     topic.outputs = outputs;
 
                     callback();
                 };
 
-                processor.overrides.run = function (inputs, outputs, callback) {
+                processor.run = function (inputs, outputs, callback) {
                     outputs['new.txt'] = 'afterwork-new';
 
                     callback(null, outputs);
                 };
 
-                processor._run({
+                processor._run('mock', {}, '', {
                     'unchange.txt': { md5: 'unchange', buffer: new Buffer('unchange') },
                     'new.txt': { md5: 'beforework-new', buffer: new Buffer('new') }
                 }, [], function (err) {
@@ -68,5 +68,5 @@
     require('assert'),
     require('async'),
     require('async-linq'),
-    require('./lib/mockprocessor')
+    require('../processor')
 );

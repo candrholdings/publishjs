@@ -1,15 +1,7 @@
 !function (async, crypto, fs, linq, path) {
     'use strict';
 
-    function Processor(options, sessionID, name) {
-        if (arguments.length !== 3) {
-            throw new Error('Implementor of Processor must pass arguments on constructor');
-        }
-
-        this.options = options;
-        this._name = name;
-        this._sessionID = sessionID;
-    }
+    function Processor() {}
 
     Processor.isPlainObject = function (obj) {
         return {}.toString.call(obj) === '[object Object]';
@@ -29,13 +21,15 @@
     };
 
     Processor.prototype._loadCache = function (callback) {
-        fs.readFile(this._getCachePath(), function (err, cache) {
-            callback(err, err ? null : (cache.inputs || {}), err ? null : (cache.outputs || {}));
-        });
+        var cache = this.options.cache;
+
+        cache ? cache.load(this._sessionID, callback) : callback(null, {}, {});
     };
 
     Processor.prototype._saveCache = function (inputs, outputs, callback) {
-        fs.writeFile(this._getCachePath(), { inputs: inputs, outputs: outputs }, callback);
+        var cache = this.options.cache;
+
+        cache ? cache.save(this._sessionID, inputs, outputs, callback) : callback();
     };
 
     Processor.prototype._getFiles = function (files, callback) {
@@ -89,8 +83,12 @@
         this._saveCache(inputs, outputs, callback);
     };
 
-    Processor.prototype._run = function (inputs, args, callback) {
+    Processor.prototype._run = function (name, options, sessionID, inputs, args, callback) {
         var that = this;
+
+        this._name = name;
+        this._sessionID = sessionID;
+        this.options = options;
 
         async.auto({
             files: function (callback) {
@@ -124,6 +122,8 @@
                 }
 
                 Object.getOwnPropertyNames(results.run).forEach(function (filename) {
+                    if (err) { return; }
+
                     var buffer = results.run[filename];
 
                     if (typeof buffer === 'string') {
@@ -150,7 +150,7 @@
                 );
             }]
         }, function (err, results) {
-            callback(err, results.outputs);
+            callback(err, err ? null : results.outputs);
         });
     };
 
@@ -170,6 +170,18 @@
     }
 
     module.exports = Processor;
+
+    module.exports.create = function (fn) {
+        var custom = function () {};
+
+        require('util').inherits(custom, Processor);
+
+        custom.prototype.run = function () {
+            fn.apply(custom, arguments);
+        };
+
+        return custom;
+    };
 }(
     require('async'),
     require('crypto'),

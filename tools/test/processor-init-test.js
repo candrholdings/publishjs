@@ -1,4 +1,4 @@
-!function (assert, MockProcessor) {
+!function (assert, Processor) {
     'use strict';
 
     var VALID_BUFFER = new Buffer('abc'),
@@ -8,15 +8,9 @@
         'init without cache': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor();
+                    processor = new Processor();
 
-                processor.overrides._loadCache = function (callback) {
-                    callback(null, {}, {});
-                };
-
-                processor.overrides._saveCache = function (inputs, outputs, callback) {
-                    callback();
-                };
+                processor.options = {};
 
                 processor._getFiles({
                     'abc.txt': { buffer: VALID_BUFFER, md5: VALID_MD5 }
@@ -39,9 +33,9 @@
         'init with some cached but no deleted files': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor();
+                    processor = new Processor();
 
-                processor.overrides._loadCache = function (callback) {
+                processor._loadCache = function (callback) {
                     callback(
                         null,
                         {
@@ -71,9 +65,9 @@
         'init with a deleted file': {
             topic: function () {
                 var callback = this.callback,
-                    processor = new MockProcessor();
+                    processor = new Processor();
 
-                processor.overrides._loadCache = function (callback) {
+                processor._loadCache = function (callback) {
                     callback(
                         null,
                         {
@@ -100,5 +94,5 @@
     }).export(module);
 }(
     require('assert'),
-    require('./lib/mockprocessor')
+    require('../processor')
 );

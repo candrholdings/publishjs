@@ -1,13 +1,11 @@
-!function (assert, async, PublishJS, MockProcessor, linq) {
+!function (assert, async, PublishJS, Processor, linq) {
     'use strict';
 
     function AppendProcessor() {
-        var that = this;
-
-        MockProcessor.apply(that, arguments);
+        Processor.call(this);
     }
 
-    require('util').inherits(AppendProcessor, MockProcessor);
+    require('util').inherits(AppendProcessor, Processor);
 
     AppendProcessor.prototype.run = function (inputs, outputs, text, callback) {
         var that = this;
@@ -22,10 +20,8 @@
     require('vows').describe('PublishJS cache integration test').addBatch({
         'when repeating an action for 2 times': {
             topic: function () {
-                MockProcessor.cleanup();
-
                 var callback = this.callback,
-                    topic,
+                    cache = new (require('../inmemorycache'))(),
                     inputs = {
                         'abc.txt': 'ABC'
                     },
@@ -38,7 +34,7 @@
 
                 async.series([
                     function (callback) {
-                        new PublishJS({ processors: processors }).build([
+                        new PublishJS({ cache: cache, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')
@@ -48,7 +44,7 @@
                         ], callback);
                     },
                     function (callback) {
-                        new PublishJS({ processors: processors }).build([
+                        new PublishJS({ cache: cache, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')
@@ -72,6 +68,6 @@
     require('assert'),
     require('async'),
     require('../publish'),
-    require('./lib/mockprocessor'),
+    require('../processor'),
     require('async-linq')
 );

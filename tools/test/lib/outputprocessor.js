@@ -1,11 +1,11 @@
-!function (linq, MockProcessor) {
+!function (linq, Processor) {
     'use strict';
 
     function OutputProcessor() {
-        MockProcessor.apply(this, arguments);
+        Processor.apply(this, arguments);
     }
 
-    require('util').inherits(OutputProcessor, MockProcessor);
+    require('util').inherits(OutputProcessor, Processor);
 
     OutputProcessor.prototype.run = function (inputs, outputs, fileSystem, callback) {
         Object.getOwnPropertyNames(inputs.all).forEach(function (filename) {
@@ -18,5 +18,5 @@
     module.exports = OutputProcessor;
 }(
     require('async-linq'),
-    require('./mockprocessor')
+    require('../../processor')
 );

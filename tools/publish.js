@@ -10,10 +10,12 @@
             options
                 .set('basedir', options.get('basedir') || path.resolve('.'))
                 .set('output', options.get('output') || 'publish/')
-                .set('temp', options.get('temp') || 'temp/')
                 .set('processors',
                     linq(DEFAULT_PROCESSORS).concat(options.get('processors') || {}).run()
-                );
+                )
+                .update('cache', function (cache) {
+                    return (cache === false || cache) ? cache : new require('./filesystemcache');
+                });
         });
 
         this.options = immutableOptions.toJS();
@@ -34,14 +36,21 @@
                     files = args.shift() || {},
                     callback = args.pop(),
                     options = this.options,
-                    processor = new CustomProcessor(options, options.pipeID + '.' + options.actionID++, name);
+                    processor = new CustomProcessor();
 
                 if (!(processor instanceof Processor)) {
                     return callback(new Error('options.processors["' + name + '"] must subclass Processor'));
                 }
 
                 try {
-                    processor._run(files, args, callback);
+                    processor._run(
+                        name,
+                        options,
+                        options.pipeID + '.' + options.actionID++,
+                        files,
+                        args,
+                        callback
+                    );
                 } catch (ex) {
                     callback(ex);
                 }

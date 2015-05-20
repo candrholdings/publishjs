@@ -1,13 +1,11 @@
-!function (assert, PublishJS, MockProcessor, linq) {
+!function (assert, PublishJS, Processor, linq) {
     'use strict';
 
     function TransformProcessor() {
-        var that = this;
-
-        MockProcessor.apply(that, arguments);
+        Processor.call(this);
     }
 
-    require('util').inherits(TransformProcessor, MockProcessor);
+    require('util').inherits(TransformProcessor, Processor);
 
     TransformProcessor.prototype.run = function (inputs, outputs, transformer, callback) {
         var that = this;
@@ -22,10 +20,9 @@
     require('vows').describe('PublishJS chain integration test').addBatch({
         'when chaining two processors': {
             topic: function () {
-                MockProcessor.cleanup();
-
                 var callback = this.callback,
                     publish = new PublishJS({
+                        cache: false,
                         processors: {
                             transform: TransformProcessor,
                             input: require('./lib/inputprocessor'),
@@ -60,6 +57,6 @@
 }(
     require('assert'),
     require('../publish'),
-    require('./lib/mockprocessor'),
+    require('../processor'),
     require('async-linq')
 );

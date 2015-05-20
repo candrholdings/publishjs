@@ -1,13 +1,13 @@
-!function (assert, PublishJS, MockProcessor, linq) {
+!function (assert, PublishJS, Processor, linq) {
     'use strict';
 
     function DummyProcessor() {
         var that = this;
 
-        MockProcessor.apply(that, arguments);
+        Processor.apply(that, arguments);
     }
 
-    require('util').inherits(DummyProcessor, MockProcessor);
+    require('util').inherits(DummyProcessor, Processor);
 
     DummyProcessor.prototype.run = function (inputs, outputs, arg1, arg2, callback) {
         var that = this;
@@ -27,10 +27,9 @@
     require('vows').describe('PublishJS simple integration test').addBatch({
         'when chaining a single action': {
             topic: function () {
-                MockProcessor.cleanup();
-
                 var callback = this.callback,
                     publish = new PublishJS({
+                        cache: false,
                         processors: {
                             dummy: DummyProcessor,
                             input: require('./lib/inputprocessor'),
@@ -59,6 +58,6 @@
 }(
     require('assert'),
     require('../publish'),
-    require('./lib/mockprocessor'),
+    require('../processor'),
     require('async-linq')
 );
