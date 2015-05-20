@@ -1,4 +1,4 @@
-!function (assert, from, publish) {
+!function (assert, from, path, publish) {
     'use strict';
 
     var processors = {
@@ -12,7 +12,7 @@
                     topic = {};
 
                 publish({ cache: false, processors: processors }).build(function (pipe, callback) {
-                    pipe.from('from-test-files/')
+                    pipe.from(path.resolve(module.filename, '../from-test-files/'))
                         .outputs(topic)
                         .run(callback);
                 }, function (err) {
@@ -34,5 +34,6 @@
 }(
     require('assert'),
     require('../from'),
+    require('path'),
     require('../publish')
 );

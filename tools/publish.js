@@ -2,7 +2,7 @@
     'use strict';
 
     var DEFAULT_PROCESSORS = {
-            // from: require('./from')
+            from: require('./from')
         };
 
     function PublishJS(immutableOptions) {
