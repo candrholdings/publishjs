@@ -16,10 +16,6 @@
         );
     };
 
-    Processor.prototype._getCachePath = function () {
-        return path.resolve(this.options.temp, this._sessionID);
-    };
-
     Processor.prototype._loadCache = function (callback) {
         var cache = this.options.cache;
 

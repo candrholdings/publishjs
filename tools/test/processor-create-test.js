@@ -5,7 +5,6 @@
         'when going thru a quickly-created processor': {
             topic: function () {
                 var callback = this.callback,
-                    topic,
                     inputs = {
                         'abc.txt': 'ABC'
                     },
