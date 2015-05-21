@@ -89,7 +89,7 @@
             }
         },
 
-        'When ranking files in-place with two directive files': {
+        'When ranking files in-place with two directive files and overlapping directives': {
             topic: function () {
                 var input = {
                     '.merge': { buffer: new Buffer([

@@ -248,7 +248,7 @@
                             var file = flatten[name];
 
                             if (file.rank) {
-                                console.log('Warning, file ' + file.path + ' is already defined in another .merge file, file order is overwritten');
+                                console.log('Warning, file ' + name + ' is already defined in another .merge file, file order will be overwritten');
                             }
 
                             switch (directiveOperator) {
