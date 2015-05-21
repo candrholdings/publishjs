@@ -157,6 +157,12 @@
         callback(new Error('"run" function must be implemented'));
     };
 
+    Processor.prototype.log = function (message) {
+        if (typeof message === 'message') {
+            console.log(message);
+        }
+    };
+
     function md5(bufferOrString) {
         var md5 = crypto.createHash('md5');
 
