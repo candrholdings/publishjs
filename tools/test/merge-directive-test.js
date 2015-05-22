@@ -52,7 +52,7 @@
 
             inputs = linq(inputs).select(function (content) { return { buffer: new Buffer(content) }; }).run();
 
-            Merge.prototype.run({ all: inputs, newOrChanged: inputs }, {}, outputFilename, function (err, outputs) {
+            Merge.call({ log: function () {} }, { all: inputs, newOrChanged: inputs }, {}, outputFilename, function (err, outputs) {
                 if (err) { return callback(err); }
 
                 outputs = linq(outputs).toArray(function (value) { return value; }).run();
