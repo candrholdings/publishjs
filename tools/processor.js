@@ -1,7 +1,9 @@
 !function (async, crypto, fs, linq, path) {
     'use strict';
 
-    function Processor(processFn) {
+    function Processor(name, options, processFn) {
+        this.name = name;
+        this.options = options;
         this._processFn = processFn;
     }
 
@@ -81,12 +83,10 @@
         this._saveCache(inputs, outputs, callback);
     };
 
-    Processor.prototype.run = function (name, options, sessionID, inputs, args, callback) {
+    Processor.prototype.run = function (sessionID, inputs, args, callback) {
         var that = this;
 
-        this._name = name;
         this._sessionID = sessionID;
-        this.options = options;
 
         async.auto({
             files: function (callback) {
@@ -102,7 +102,7 @@
 
                 runArgs.push(callback);
 
-                that._processFn.apply({ options: options }, runArgs);
+                that._processFn.apply({ options: that.options }, runArgs);
             }],
             inputs: ['files', function (callback, results) {
                 callback(null, linq(results.files.inputs.all).select(function (entry) {
@@ -154,7 +154,7 @@
 
     Processor.prototype.log = function (message) {
         if (typeof message === 'message') {
-            console.log(message);
+            console.log(name + ': ' + message);
         }
     };
 

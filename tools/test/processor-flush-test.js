@@ -6,7 +6,7 @@
             topic: function () {
                 var callback = this.callback,
                     topic = {},
-                    processor = new Processor(function (inputs, outputs, callback) {
+                    processor = new Processor('', {}, function (inputs, outputs, callback) {
                         outputs['new.txt'] = 'afterwork-new';
 
                         callback(null, outputs);
@@ -27,7 +27,7 @@
                     callback();
                 };
 
-                processor.run('mock', {}, '', {
+                processor.run('', {
                     'unchange.txt': { md5: 'unchange', buffer: new Buffer('unchange') },
                     'new.txt': { md5: 'beforework-new', buffer: new Buffer('new') }
                 }, [], function (err) {

@@ -44,7 +44,7 @@
                 throw new Error('options.processors["' + name + '"] should be a function, instead of ' + processFn);
             }
 
-            var processor = new Processor(processFn);
+            var processor = new Processor(name, that.options, processFn);
 
             actions[name] = function () {
                 var args = [].slice.call(arguments),
@@ -54,8 +54,6 @@
 
                 try {
                     processor.run(
-                        name,
-                        options,
                         options._pipeID + '.' + that._nextActionID++,
                         files,
                         args,
