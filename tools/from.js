@@ -1,13 +1,7 @@
 !function (async, fs, linq, Processor, path) {
     'use strict';
 
-    function FromProcessor() {
-        Processor.apply(this, arguments);
-    }
-
-    require('util').inherits(FromProcessor, Processor);
-
-    FromProcessor.prototype.run = function (inputs, outputs, dirpath, callback) {
+    module.exports = function (inputs, outputs, dirpath, callback) {
         try {
             crawl(path.resolve(this.options.basedir || '.', dirpath), callback);
         } catch (ex) {
@@ -62,8 +56,6 @@
             }
         );
     }
-
-    module.exports = FromProcessor;
 }(
     require('async'),
     require('fs'),

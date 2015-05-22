@@ -1,22 +1,6 @@
 !function (assert, async, Processor, linq) {
     'use strict';
 
-    function AppendProcessor() {
-        Processor.call(this);
-    }
-
-    require('util').inherits(AppendProcessor, Processor);
-
-    AppendProcessor.prototype.run = function (inputs, outputs, text, callback) {
-        var that = this;
-
-        linq(inputs.newOrChanged).select(function (entry, filename) {
-            outputs[filename + '.out'] = entry.buffer.toString() + text;
-        }).run();
-
-        callback(null, outputs);
-    };
-
     require('vows').describe('PublishJS cache integration test').addBatch({
         'when repeating an action for 2 times': {
             topic: function () {
@@ -27,7 +11,15 @@
                     },
                     outputs = {},
                     processors = {
-                        append: AppendProcessor,
+                        append: function (inputs, outputs, text, callback) {
+                            var that = this;
+
+                            linq(inputs.newOrChanged).select(function (entry, filename) {
+                                outputs[filename + '.out'] = entry.buffer.toString() + text;
+                            }).run();
+
+                            callback(null, outputs);
+                        },
                         input: require('./lib/inputprocessor'),
                         output: require('./lib/outputprocessor')
                     };

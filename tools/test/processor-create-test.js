@@ -10,7 +10,7 @@
                     },
                     outputs = {},
                     processors = {
-                        append: Processor.create(function (inputs, outputs, text, callback) {
+                        append: function (inputs, outputs, text, callback) {
                             var that = this;
 
                             linq(inputs.newOrChanged).select(function (entry, filename) {
@@ -18,7 +18,7 @@
                             }).run();
 
                             callback(null, outputs);
-                        }),
+                        },
                         input: require('./lib/inputprocessor'),
                         output: require('./lib/outputprocessor')
                     };

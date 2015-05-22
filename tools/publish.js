@@ -6,6 +6,8 @@
         };
 
     function PublishJS(immutableOptions) {
+        var that = this;
+
         immutableOptions = immutableOptions.withMutations(function (options) {
             options
                 .set('basedir', options.get('basedir') || path.resolve('.'))
@@ -28,35 +30,33 @@
                 });
         });
 
-        this.options = immutableOptions.toJS();
-        this._options = immutableOptions;
+        that.options = immutableOptions.toJS();
+        that._options = immutableOptions;
+        that._nextActionID = 0;
 
-        var actions = this._actions = {},
-            processors = this.options.processors;
+        var actions = that._actions = {},
+            processors = that.options.processors;
 
         Object.getOwnPropertyNames(processors).forEach(function (name) {
-            var CustomProcessor = processors[name];
+            var processFn = processors[name];
 
-            if (typeof CustomProcessor !== 'function') {
-                throw new Error('options.processors["' + name + '"] should be a function, instead of ' + CustomProcessor);
+            if (typeof processFn !== 'function') {
+                throw new Error('options.processors["' + name + '"] should be a function, instead of ' + processFn);
             }
+
+            var processor = new Processor(processFn);
 
             actions[name] = function () {
                 var args = [].slice.call(arguments),
                     files = args.shift() || {},
                     callback = args.pop(),
-                    options = this.options,
-                    processor = new CustomProcessor();
-
-                if (!(processor instanceof Processor)) {
-                    return callback(new Error('options.processors["' + name + '"] must subclass Processor'));
-                }
+                    options = this.options;
 
                 try {
-                    processor._run(
+                    processor.run(
                         name,
                         options,
-                        options.pipeID + '.' + options.actionID++,
+                        options._pipeID + '.' + that._nextActionID++,
                         files,
                         args,
                         callback
@@ -86,15 +86,13 @@
         return new Pipe(
             this._actions,
             this._options
-                .set('actionID', 0)
-                .set('pipeID', pipeID)
+                .set('_pipeID', pipeID)
                 .toJS()
         );
     };
 
     module.exports = function (options) {
         options = Immutable.Map(options).withMutations(function (options) {
-            options._nextActionID = 0;
             options._nextPipeID = 0;
         });
 

@@ -1,7 +1,9 @@
 !function (async, crypto, fs, linq, path) {
     'use strict';
 
-    function Processor() {}
+    function Processor(processFn) {
+        this._processFn = processFn;
+    }
 
     Processor.isPlainObject = function (obj) {
         return {}.toString.call(obj) === '[object Object]';
@@ -79,7 +81,7 @@
         this._saveCache(inputs, outputs, callback);
     };
 
-    Processor.prototype._run = function (name, options, sessionID, inputs, args, callback) {
+    Processor.prototype.run = function (name, options, sessionID, inputs, args, callback) {
         var that = this;
 
         this._name = name;
@@ -100,7 +102,7 @@
 
                 runArgs.push(callback);
 
-                that.run.apply(that, runArgs);
+                that._processFn.apply({ options: options }, runArgs);
             }],
             inputs: ['files', function (callback, results) {
                 callback(null, linq(results.files.inputs.all).select(function (entry) {
@@ -150,13 +152,6 @@
         });
     };
 
-    // run(inputs, outputs, arg0, arg1, ..., argN, callback)
-    Processor.prototype.run = function () {
-        var callback = arguments[arguments.length - 1];
-
-        callback(new Error('"run" function must be implemented'));
-    };
-
     Processor.prototype.log = function (message) {
         if (typeof message === 'message') {
             console.log(message);
@@ -172,18 +167,6 @@
     }
 
     module.exports = Processor;
-
-    module.exports.create = function (fn) {
-        var custom = function () {};
-
-        require('util').inherits(custom, Processor);
-
-        custom.prototype.run = function () {
-            fn.apply(custom, arguments);
-        };
-
-        return custom;
-    };
 }(
     require('async'),
     require('crypto'),

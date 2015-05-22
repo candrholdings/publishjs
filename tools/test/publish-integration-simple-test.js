@@ -1,29 +1,6 @@
 !function (assert, Processor, linq) {
     'use strict';
 
-    function DummyProcessor() {
-        var that = this;
-
-        Processor.apply(that, arguments);
-    }
-
-    require('util').inherits(DummyProcessor, Processor);
-
-    DummyProcessor.prototype.run = function (inputs, outputs, arg1, arg2, callback) {
-        var that = this;
-
-        assert.equal(arg1, 'dummy-arg1');
-        assert.equal(arg2, 'dummy-arg2');
-        assert.equal(that.options.assertion, '123');
-        assert(that instanceof DummyProcessor);
-
-        linq(inputs.newOrChanged).select(function (entry, filename) {
-            outputs[filename + '.dummy'] = entry.buffer.toString() + '.dummy';
-        }).run();
-
-        callback(null, outputs);
-    };
-
     require('vows').describe('PublishJS simple integration test').addBatch({
         'when chaining a single action': {
             topic: function () {
@@ -31,7 +8,17 @@
                     publish = require('../publish')({
                         cache: false,
                         processors: {
-                            dummy: DummyProcessor,
+                            dummy: function (inputs, outputs, arg1, arg2, callback) {
+                                assert.equal(arg1, 'dummy-arg1');
+                                assert.equal(arg2, 'dummy-arg2');
+                                assert.equal(this.options.assertion, '123');
+
+                                linq(inputs.newOrChanged).select(function (entry, filename) {
+                                    outputs[filename + '.dummy'] = entry.buffer.toString() + '.dummy';
+                                }).run();
+
+                                callback(null, outputs);
+                            },
                             input: require('./lib/inputprocessor'),
                             output: require('./lib/outputprocessor')
                         },

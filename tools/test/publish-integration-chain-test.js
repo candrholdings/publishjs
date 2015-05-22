@@ -1,22 +1,6 @@
 !function (assert, Processor, linq) {
     'use strict';
 
-    function TransformProcessor() {
-        Processor.call(this);
-    }
-
-    require('util').inherits(TransformProcessor, Processor);
-
-    TransformProcessor.prototype.run = function (inputs, outputs, transformer, callback) {
-        var that = this;
-
-        linq(inputs.newOrChanged).select(function (entry, filename) {
-            outputs[filename] = transformer(entry.buffer.toString());
-        }).run();
-
-        callback(null, outputs);
-    };
-
     require('vows').describe('PublishJS chain integration test').addBatch({
         'when chaining two processors': {
             topic: function () {
@@ -24,7 +8,15 @@
                     publish = require('../publish')({
                         cache: false,
                         processors: {
-                            transform: TransformProcessor,
+                            transform: function (inputs, outputs, transformer, callback) {
+                                var that = this;
+
+                                linq(inputs.newOrChanged).select(function (entry, filename) {
+                                    outputs[filename] = transformer(entry.buffer.toString());
+                                }).run();
+
+                                callback(null, outputs);
+                            },
                             input: require('./lib/inputprocessor'),
                             output: require('./lib/outputprocessor')
                         }
