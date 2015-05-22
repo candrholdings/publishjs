@@ -2,19 +2,22 @@
     'use strict';
 
     var DEFAULT_PROCESSORS = {
-            from: require('./from')
-        };
+            from: require('./from'),
+            save: require('./save')
+        },
+        NULL_FUNCTION = function () {};
 
     function PublishJS(immutableOptions) {
         var that = this;
 
         immutableOptions = immutableOptions.withMutations(function (options) {
             options
-                .set('basedir', options.get('basedir') || path.resolve('.'))
-                .set('output', options.get('output') || 'publish/')
                 .set('processors',
                     linq(DEFAULT_PROCESSORS).concat(options.get('processors') || {}).run()
                 )
+                .update('basedir', function (basedir) {
+                    return basedir ? (basedir || '').replace(/[\\\/]/g, '/') : path.resolve('.');
+                })
                 .update('cache', function (cache) {
                     if (cache === false) {
                         return cache;
@@ -27,6 +30,12 @@
                     } else {
                         throw new Error('cache must either be string or base from CacheProvider');
                     }
+                })
+                .update('log', function (log) {
+                    return log === false ? NULL_FUNCTION : (log || console.log.bind(console));
+                })
+                .update('output', function (output) {
+                    return output ? (output || '').replace(/[\\\/]/g, '/') : 'publish/';
                 });
         });
 

@@ -1,13 +1,7 @@
 !function (Processor, linq, number, path, BufferAppender) {
     'use strict';
 
-    function Merge() {
-        Processor.call(this);
-    }
-
-    require('util').inherits(Merge, Processor);
-
-    Merge.prototype.run = function (inputs, outputs, outputFilename, callback) {
+    module.exports = function (inputs, outputs, outputFilename, callback) {
         if (arguments.length === 3) {
             outputFilename = null;
             callback = arguments[2];
@@ -18,7 +12,7 @@
         var inputMap = sortAndSplitIntoMap(inputs.all),
             sorted;
 
-        rankFilesInplace(inputMap);
+        rankFilesInplace(inputMap, 0, this.log);
 
         sorted = linq(flattenRecursive(inputMap))
             .toArray(function (entry, filename) { return { filename: filename, entry: entry }; })
@@ -42,7 +36,7 @@
         var merged = new BufferAppender(sorted.map(function (kvp) { return kvp.entry.buffer; })).join('\n'),
             outputs = {};
 
-        this.log(sorted.map(function (kvp) { return kvp.filename; }).join('+ \n') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
+        this.log(sorted.map(function (kvp) { return kvp.filename; }).join('\n+ ') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
 
         outputs[outputFilename] = { buffer: merged };
 
@@ -215,9 +209,7 @@
         }, newMap || {});
     }
 
-    function rankFilesInplace(map, rank) {
-        rank = rank || 0;
-
+    function rankFilesInplace(map, rank, log) {
         var flatten = flattenRecursive(map);
 
         Object.getOwnPropertyNames(map).sort().forEach(function (name) {
@@ -236,9 +228,7 @@
                         directivePattern = directive.pattern;
 
                     if (directiveOperator !== '+' && directiveOperator !== '-') {
-                        console.log('Unknown operator "' + directiveOperator + '" specified in ' + file.path + ':' + (lineNumber + 1));
-
-                        throw new Error('unknown operator');
+                        throw new Error('unknown directive in ' + file.path + ':' + (lineNumber + 1));
                     }
 
                     var found;
@@ -248,7 +238,7 @@
                             var file = flatten[name];
 
                             if (file.rank) {
-                                console.log('Warning, file ' + name + ' is already defined in another .merge file, file order will be overwritten');
+                                log && log('Warning, file ' + name + ' is already defined in another .merge file, file order will be overwritten');
                             }
 
                             switch (directiveOperator) {
@@ -276,7 +266,7 @@
                 });
             } else if (name[name.length - 1] === '/') {
                 // is directory
-                rank = rankFilesInplace(file, rank);
+                rank = rankFilesInplace(file, rank, log);
             }
         });
 
@@ -318,15 +308,13 @@
         }
     }
 
-    module.exports = Merge;
-
     // Functions exposed for unit testing
-    Merge._sortAndSplitIntoMap = sortAndSplitIntoMap;
-    Merge._replacePatterns = replacePatterns;
-    Merge._flattenRecursive = flattenRecursive;
-    Merge._rankFilesInplace = rankFilesInplace;
-    Merge._parseDirectiveLine = parseDirectiveLine;
-    Merge._compareRank = compareRank;
+    module.exports._sortAndSplitIntoMap = sortAndSplitIntoMap;
+    module.exports._replacePatterns = replacePatterns;
+    module.exports._flattenRecursive = flattenRecursive;
+    module.exports._rankFilesInplace = rankFilesInplace;
+    module.exports._parseDirectiveLine = parseDirectiveLine;
+    module.exports._compareRank = compareRank;
 }(
     require('./processor'),
     require('async-linq'),

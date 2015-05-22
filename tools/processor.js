@@ -102,7 +102,12 @@
 
                 runArgs.push(callback);
 
-                that._processFn.apply({ options: that.options }, runArgs);
+                that._processFn.apply({
+                    log: function (msg) {
+                        that.options.log(pad(this.name, 12, ' ') + ': ' + msg);
+                    },
+                    options: that.options
+                }, runArgs);
             }],
             inputs: ['files', function (callback, results) {
                 callback(null, linq(results.files.inputs.all).select(function (entry) {
@@ -114,9 +119,9 @@
                     err;
 
                 if (!results.run) {
-                    return callback(new Error('Processor#' + that._name + '.run must return output files or an empty map'));
+                    return callback(new Error('Processor#' + that.name + '.run must return output files or an empty map'));
                 } else if (!Processor.isPlainObject(results.run)) {
-                    return callback(new Error('Processor#' + that._name + '.run must return plain object as output'));
+                    return callback(new Error('Processor#' + that.name + '.run must return plain object as output'));
                 }
 
                 Object.getOwnPropertyNames(results.run).forEach(function (filename) {
@@ -127,7 +132,7 @@
                     if (typeof buffer === 'string') {
                         buffer = new Buffer(buffer);
                     } else if (!(buffer instanceof Buffer)) {
-                        err = new Error('Processor#' + that._name + ' output "' + filename + '" must be either string or Buffer');
+                        err = new Error('Processor#' + that.name + ' output "' + filename + '" must be either string or Buffer');
 
                         return;
                     }
@@ -152,11 +157,17 @@
         });
     };
 
-    Processor.prototype.log = function (message) {
-        if (typeof message === 'message') {
-            console.log(name + ': ' + message);
+    function pad(str, count, padding) {
+        count -= str.length;
+        str = [str];
+        padding || (padding = ' ');
+
+        while (count-- > 0) {
+            str.unshift(padding);
         }
-    };
+
+        return str.join('');
+    }
 
     function md5(bufferOrString) {
         var md5 = crypto.createHash('md5');
@@ -167,6 +178,7 @@
     }
 
     module.exports = Processor;
+    module.exports._pad = pad;
 }(
     require('async'),
     require('crypto'),
