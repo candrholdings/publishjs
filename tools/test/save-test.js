@@ -1,4 +1,4 @@
-!function (assert, linq, PublishJS, path) {
+!function (assert, linq, PublishJS, path, rmdir) {
     'use strict';
 
     var basedir = path.join(path.dirname(module.filename), 'save-test-temp/'),
@@ -10,19 +10,28 @@
     require('vows').describe('Processor "save" module').addBatch({
         'When saving 3 files': {
             topic: function () {
-                new PublishJS({
-                    cache: false,
-                    output: basedir,
-                    processors: processors
-                }).build(function (pipe, callback) {
-                    pipe.inputs({
-                            'abc.txt': 'ABC',
-                            'def.txt': 'DEF',
-                            'xyz.txt': 'XYZ'
-                        })
-                        .save('1/')
-                        .run(callback);
-                }, this.callback);
+                var callback = this.callback;
+
+                rmdir(basedir, function (err) {
+                    if (err) { return callback(err); }
+
+                    new PublishJS({
+                        cache: false,
+                        output: basedir,
+                        processors: processors
+                    }).build(function (pipe, callback) {
+                        pipe.inputs({
+                                'abc.txt': 'ABC',
+                                '1/abc.txt': '1ABC',
+                                '1/def.txt': '1DEF',
+                                '2/abc.txt': '2ABC',
+                                '2/def.txt': '2DEF',
+                                '2/xyz.txt': '2XYZ'
+                            })
+                            .save('1/')
+                            .run(callback);
+                    }, callback);
+                });
             },
 
             'should write all 3 files to disk': function (topic) {
@@ -31,8 +40,11 @@
 
                     assert.deepEqual(outputs, {
                         'abc.txt': 'ABC',
-                        'def.txt': 'DEF',
-                        'xyz.txt': 'XYZ'
+                        '1/abc.txt': '1ABC',
+                        '1/def.txt': '1DEF',
+                        '2/abc.txt': '2ABC',
+                        '2/def.txt': '2DEF',
+                        '2/xyz.txt': '2XYZ'
                     });
                 });
             }
@@ -60,5 +72,6 @@
     require('assert'),
     require('async-linq'),
     require('../publish'),
-    require('path')
+    require('path'),
+    require('rmdir')
 );
