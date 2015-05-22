@@ -2,14 +2,15 @@
     'use strict';
 
     module.exports = function (inputs, outputs, dirpath, callback) {
-        if (!/\/$/.test(dirpath) && linq(outputs).count().run() > 1) {
-            return callback(new Error('Cannot save to file'));
+        var options = this.options,
+            isDir = /\/$/.test(dirpath);
+
+        if (!isDir && linq(outputs).count().run() > 1) {
+            return callback(new Error('Cannot save multiple outputs to a single file, consider append / to the output path'));
         }
 
-        var options = this.options;
-
         linq(inputs.all).async.select(function (entry, filename, callback) {
-            filename = path.resolve(options.output, dirpath, filename);
+            filename = isDir ? path.resolve(options.output, dirpath, filename) : path.resolve(options.output, dirpath);
 
             mkdirp(path.dirname(filename), function (err) {
                 if (err) { return callback(err); }

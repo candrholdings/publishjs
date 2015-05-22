@@ -13,7 +13,7 @@
                 var callback = this.callback;
 
                 rmdir(basedir, function (err) {
-                    if (err) { return callback(err); }
+                    if (err && err.code !== 'ENOENT') { return callback(err); }
 
                     new PublishJS({
                         cache: false,
@@ -35,7 +35,7 @@
             },
 
             'should write all 3 files to disk': function (topic) {
-                crawl('1/', function (err, outputs) {
+                readContent('1/', function (err, outputs) {
                     if (err) { throw err; }
 
                     assert.deepEqual(outputs, {
@@ -48,10 +48,42 @@
                     });
                 });
             }
+        },
+
+        'When saving a single file to another filename': {
+            topic: function () {
+                var callback = this.callback;
+
+                rmdir(basedir, function (err) {
+                    if (err) { return callback(err); }
+
+                    new PublishJS({
+                        cache: false,
+                        output: basedir,
+                        processors: processors
+                    }).build(function (pipe, callback) {
+                        pipe.inputs({
+                                'abc.txt': 'ABC',
+                            })
+                            .save('2/xyz.txt')
+                            .run(callback);
+                    }, callback);
+                });
+            },
+
+            'should write with a new filename': function (topic) {
+                readContent('2/', function (err, outputs) {
+                    if (err) { throw err; }
+
+                    assert.deepEqual(outputs, {
+                        'xyz.txt': 'ABC',
+                    });
+                });
+            }
         }
     }).export(module);
 
-    function crawl(path, callback) {
+    function readContent(path, callback) {
         var result = {};
 
         new PublishJS({
