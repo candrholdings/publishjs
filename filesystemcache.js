@@ -1,4 +1,4 @@
-!function (CacheProvider, fs, mkdirp, path) {
+!function (CacheProvider, fs, linq, mkdirp, path) {
     'use strict';
 
     function FileSystemCache(options) {
@@ -21,7 +21,30 @@
             if (err) { return callback(err); }
 
             fs.readFile(that._getFilename(name), function (err, cache) {
-                callback(null, err ? {} : (cache.inputs || {}), err ? {} : (cache.outputs || {}));
+                if (!err) {
+                    try {
+                        cache = JSON.parse(cache);
+                    } catch (ex) {
+                        return callback(null, {}, {});
+                    }
+
+                    callback(
+                        null,
+                        cache.inputs,
+                        linq(cache.outputs)
+                            .select(function (output) {
+                                return {
+                                    buffer: new Buffer(output.buffer, 'base64'),
+                                    md5: output.md5
+                                };
+                            })
+                            .run()
+                    );
+                } else if (err.code === 'ENOENT') {
+                    callback(null, {}, {});
+                } else {
+                    callback(err);
+                }
             });
         });
     };
@@ -32,7 +55,19 @@
         mkdirp(that._tempdir, function (err) {
             if (err) { return callback(err); }
 
-            fs.writeFile(that._getFilename(name), { inputs: inputs, outputs: outputs }, callback);
+            var cache = {
+                    inputs: linq(inputs).select(function (input) {
+                        return { md5: input.md5 };
+                    }).run(),
+                    outputs: linq(outputs).select(function (output) {
+                        return {
+                            buffer: output.buffer.toString('base64'),
+                            md5: output.md5
+                        };
+                    }).run()
+                };
+
+            fs.writeFile(that._getFilename(name), JSON.stringify(cache, null, 2), callback);
         });
     };
 
@@ -40,6 +75,7 @@
 }(
     require('./cacheprovider'),
     require('fs'),
+    require('async-linq'),
     require('mkdirp'),
     require('path')
 );

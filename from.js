@@ -4,11 +4,17 @@
     module.exports = function (inputs, outputs, dirpath, callback) {
         dirpath = path.resolve(this.options.basedir || '.', dirpath);
 
-        var that = this;
+        var that = this,
+            displayablePath = path.relative(process.cwd(), dirpath).replace(/\\/, '/');
 
         try {
             crawl(dirpath, function (err, outputs) {
-                !err && that.log('Reading from ' + dirpath + '\n' + Object.getOwnPropertyNames(outputs).map(function (n) { return '  ' + n; } ).sort().join('\n'));
+                if (!err) {
+                    var outputCount = Object.getOwnPropertyNames(outputs).length,
+                        displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
+
+                    that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs ? '\u2026' : ''));
+                }
 
                 callback(err, err ? null : outputs);
             });

@@ -21,7 +21,19 @@
                 fs.writeFile(filename, entry.buffer, callback);
             });
         }).run(function (err) {
-            !err && that.log('Saving to ' + dirpath + '\n' + Object.getOwnPropertyNames(inputs.newOrChanged).map(indent).join('\n'));
+            if (!err) {
+                var allCount = Object.getOwnPropertyNames(inputs.all).length,
+                    displayPath = path.relative(process.cwd(), dirpath).replace(/\\/g, '/');
+
+                if (allCount && !Object.getOwnPropertyNames(inputs.newOrChanged).length) {
+                    that.log('No new changes to save to ./' + displayPath + ', there are ' + allCount + ' file(s) unchanged');
+                } else if (!allCount) {
+                    that.log('No files to save to ./' + displayPath);
+                } else {
+                    that.log('Saving changed files to ./' + displayPath + '\n' + Object.getOwnPropertyNames(inputs.newOrChanged).map(indent).join('\n'));
+                }
+            }
+
             callback(err, {});
         });
     };
