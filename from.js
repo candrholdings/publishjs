@@ -8,7 +8,7 @@
 
         try {
             crawl(dirpath, function (err, outputs) {
-                !err && that.log('Reading from ' + dirpath + ':\n' + Object.getOwnPropertyNames(outputs).sort().join('\n'));
+                !err && that.log('Reading from ' + dirpath + '\n' + Object.getOwnPropertyNames(outputs).map(function (n) { return '  ' + n; } ).sort().join('\n'));
 
                 callback(err, err ? null : outputs);
             });
