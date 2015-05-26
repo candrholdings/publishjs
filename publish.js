@@ -1,4 +1,4 @@
-!function (async, FileSystemCache, Immutable, linq, path, Pipe, Processor) {
+!function (async, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -84,7 +84,11 @@
 
         async.series(linq(tasks).toArray(function (fn, nameOrIndex) {
             return function (callback) {
-                fn.call(that, that._createPipe(nameOrIndex), callback);
+                console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" started'));
+
+                fn.call(that, that._createPipe(nameOrIndex), function (err) {
+                    console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
+                });
             };
         }).run(), callback);
     };
@@ -108,6 +112,7 @@
 }(
     require('async'),
     require('./filesystemcache'),
+    require('./format'),
     require('immutable'),
     require('async-linq'),
     require('path'),
