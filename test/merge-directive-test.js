@@ -59,7 +59,7 @@
 
                 if (outputs.length > 1) { return callback(new Error('more than one merged output')); }
 
-                callback(null, outputs[0] && outputs[0].buffer.toString());
+                callback(null, outputs[0] && outputs[0].toString());
             });
         };
     }

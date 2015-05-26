@@ -38,7 +38,7 @@
 
         this.log(sorted.map(function (kvp) { return kvp.filename; }).join('\n+ ') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
 
-        outputs[outputFilename] = { buffer: merged };
+        outputs[outputFilename] = merged;
 
         callback(null, outputs);
     };
