@@ -11,7 +11,7 @@
                 var callback = this.callback,
                     topic = {};
 
-                publish({ cache: false, processors: processors }).build(function (pipe, callback) {
+                publish({ cache: false, log: false, processors: processors }).build(function (pipe, callback) {
                     pipe.from(path.resolve(module.filename, '../from-test-files/'))
                         .outputs(topic)
                         .run(callback);

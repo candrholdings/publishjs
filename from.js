@@ -2,8 +2,16 @@
     'use strict';
 
     module.exports = function (inputs, outputs, dirpath, callback) {
+        dirpath = path.resolve(this.options.basedir || '.', dirpath);
+
+        var that = this;
+
         try {
-            crawl(path.resolve(this.options.basedir || '.', dirpath), callback);
+            crawl(dirpath, function (err, outputs) {
+                !err && that.log('Reading from ' + dirpath + ':\n' + Object.getOwnPropertyNames(outputs).sort().join('\n'));
+
+                callback(err, err ? null : outputs);
+            });
         } catch (ex) {
             callback(ex);
         }

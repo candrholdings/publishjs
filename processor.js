@@ -104,7 +104,7 @@
 
                 that._processFn.apply({
                     log: function (msg) {
-                        that.options.log(pad(this.name, 12, ' ') + ': ' + msg);
+                        that.options.log(formatLog(that.name, msg, 12));
                     },
                     options: that.options
                 }, runArgs);
@@ -157,16 +157,32 @@
         });
     };
 
+    function indent(str, count) {
+        var indentation = [];
+
+        while (count-- > 0) {
+            indentation.push(' ');
+        }
+
+        return indentation.join('') + str;
+    }
+
     function pad(str, count, padding) {
         count -= str.length;
         str = [str];
         padding || (padding = ' ');
 
         while (count-- > 0) {
-            str.unshift(padding);
+            str.push(padding);
         }
 
         return str.join('');
+    }
+
+    function formatLog(facility, message, count) {
+        return message.split('\n').map(function (line, index) {
+            return index ? indent(line, count + 2) : (pad(facility, count) + ': ' + line);
+        }).join('\n');
     }
 
     function md5(bufferOrString) {
@@ -178,6 +194,8 @@
     }
 
     module.exports = Processor;
+    module.exports._indent = indent;
+    module.exports._formatLog = formatLog;
     module.exports._pad = pad;
 }(
     require('async'),

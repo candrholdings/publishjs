@@ -17,6 +17,7 @@
 
                     new PublishJS({
                         cache: false,
+                        log: false,
                         output: basedir,
                         processors: processors
                     }).build(function (pipe, callback) {
@@ -59,6 +60,7 @@
 
                     new PublishJS({
                         cache: false,
+                        log: false,
                         output: basedir,
                         processors: processors
                     }).build(function (pipe, callback) {
@@ -89,6 +91,7 @@
         new PublishJS({
             cache: false,
             basedir: basedir,
+            log: false,
             processors: processors
         }).build(function (pipe, callback) {
             pipe.from(path)
