@@ -21,7 +21,7 @@
             if (err) { return callback(err); }
 
             fs.readFile(that._getFilename(name), function (err, cache) {
-                callback(err, err ? null : (cache.inputs || {}), err ? null : (cache.outputs || {}));
+                callback(null, err ? null : (cache.inputs || {}), err ? null : (cache.outputs || {}));
             });
         });
     };
