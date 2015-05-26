@@ -3,6 +3,7 @@
 
     var DEFAULT_PROCESSORS = {
             from: require('./from'),
+            merge: require('./merge'),
             save: require('./save')
         },
         NULL_FUNCTION = function () {};
@@ -63,7 +64,7 @@
 
                 try {
                     processor.run(
-                        options._pipeID + '.' + that._nextActionID++,
+                        options._pipeID + '.' + that._nextActionID++ + '-' + name,
                         files,
                         args,
                         callback

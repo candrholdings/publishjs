@@ -47,11 +47,13 @@
             } else {
                 dirpath.run(function (err, result) {
                     if (!err) {
+                        var massaged = {};
+
                         Object.getOwnPropertyNames(result).forEach(function (filename) {
-                            result[filename] = result[filename].buffer;
+                            massaged[filename] = result[filename].buffer;
                         });
 
-                        results.push(result);
+                        results.push(massaged);
                     }
 
                     callback(err);
