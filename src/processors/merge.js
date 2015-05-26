@@ -36,7 +36,7 @@
         var merged = new BufferAppender(sorted.map(function (kvp) { return kvp.entry.buffer; })).join('\n'),
             outputs = {};
 
-        this.log(sorted.map(function (kvp) { return kvp.filename; }).join('\n+ ') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
+        this.log(sorted.map(function (kvp) { return kvp.filename + ' (' + number.bytes(kvp.entry.buffer.length) + ')'; }).join('\n+ ') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
 
         outputs[outputFilename] = merged;
 
