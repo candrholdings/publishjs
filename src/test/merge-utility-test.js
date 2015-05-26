@@ -239,4 +239,4 @@
             }
         }
     }).export(module);
-}(require('assert'), require('../merge'));
+}(require('assert'), require('../processors/merge'));

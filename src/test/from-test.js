@@ -36,7 +36,7 @@
             topic: function () {
                 var callback = this.callback,
                     topic = {
-                        cache: require('../inmemorycache')(),
+                        cache: require('../caches/inmemorycache')(),
                         outputs: {}
                     };
 
@@ -84,7 +84,7 @@
     }
 }(
     require('assert'),
-    require('../from'),
+    require('../processors/from'),
     require('async-linq'),
     require('path'),
     require('../publish')

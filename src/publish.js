@@ -2,9 +2,9 @@
     'use strict';
 
     var DEFAULT_PROCESSORS = {
-            from: require('./from'),
-            merge: require('./merge'),
-            save: require('./save')
+            from: require('./processors/from'),
+            merge: require('./processors/merge'),
+            save: require('./processors/save')
         },
         NULL_FUNCTION = function () {};
 
@@ -26,7 +26,7 @@
                         return new FileSystemCache();
                     } else if (typeof cache === 'string') {
                         return new FileSystemCache({ tempdir: cache });
-                    } else if (cache instanceof require('./cacheprovider')) {
+                    } else if (cache instanceof require('./cache')) {
                         return cache;
                     } else {
                         throw new Error('cache must either be string or base from CacheProvider');
@@ -115,11 +115,11 @@
     };
 }(
     require('async'),
-    require('./filesystemcache'),
-    require('./format'),
+    require('./caches/filesystemcache'),
+    require('./util/format'),
     require('immutable'),
     require('async-linq'),
     require('path'),
-    require('./pipe'),
+    require('./util/pipe'),
     require('./processor')
 );

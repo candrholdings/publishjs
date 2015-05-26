@@ -1,14 +1,14 @@
-!function (CacheProvider, path) {
+!function (Cache, path) {
     'use strict';
 
     function InMemoryCache(options) {
-        CacheProvider.call(this);
+        Cache.call(this);
 
         this.options = options;
         this.cache = {};
     }
 
-    require('util').inherits(InMemoryCache, CacheProvider);
+    require('util').inherits(InMemoryCache, Cache);
 
     InMemoryCache.prototype.load = function (name, callback) {
         var cache = this.cache[name];
@@ -28,6 +28,6 @@
 
     module.exports.InMemoryCache = InMemoryCache;
 }(
-    require('./cacheprovider'),
+    require('../cache'),
     require('path')
 );

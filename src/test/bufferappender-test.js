@@ -101,4 +101,4 @@
             }
         }
     }).export(module);
-}(require('assert'), require('../bufferappender'));
+}(require('assert'), require('../util/bufferappender'));

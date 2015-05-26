@@ -316,9 +316,9 @@
     module.exports._parseDirectiveLine = parseDirectiveLine;
     module.exports._compareRank = compareRank;
 }(
-    require('./processor'),
+    require('../processor'),
     require('async-linq'),
-    require('./number'),
+    require('../util/number'),
     require('path'),
-    require('./bufferappender')
+    require('../util/bufferappender')
 );

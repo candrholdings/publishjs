@@ -9,4 +9,4 @@
             }
         }
     }).export(module);
-}(require('assert'), require('../format'));
+}(require('assert'), require('../util/format'));

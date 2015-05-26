@@ -63,4 +63,4 @@
             });
         };
     }
-}(require('assert'), require('../merge'), require('async-linq'));
+}(require('assert'), require('../processors/merge'), require('async-linq'));

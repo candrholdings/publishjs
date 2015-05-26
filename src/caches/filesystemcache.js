@@ -1,14 +1,14 @@
-!function (CacheProvider, fs, linq, mkdirp, path) {
+!function (Cache, fs, linq, mkdirp, path) {
     'use strict';
 
     function FileSystemCache(options) {
-        CacheProvider.call(this);
+        Cache.call(this);
 
         this.options = options || (options = {});
         this._tempdir = path.resolve(options.tempdir || 'temp/');
     }
 
-    require('util').inherits(FileSystemCache, CacheProvider);
+    require('util').inherits(FileSystemCache, Cache);
 
     FileSystemCache.prototype._getFilename = function (name) {
         return path.resolve(this._tempdir, name);
@@ -77,7 +77,7 @@
 
     module.exports.FileSystemCache = FileSystemCache;
 }(
-    require('./cacheprovider'),
+    require('../cache'),
     require('fs'),
     require('async-linq'),
     require('mkdirp'),

@@ -169,7 +169,7 @@
 }(
     require('async'),
     require('crypto'),
-    require('./format'),
+    require('./util/format'),
     require('fs'),
     require('async-linq'),
     require('path')

@@ -1,12 +1,5 @@
-/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, curly:true, devel:true, indent:4, maxerr:50, expr:true, onevar:true, browser:true, node:true */
-
-!function (exports) {
+!function () {
     'use strict';
-
-    if (!exports) {
-        // This feature is not supported in the current environment.
-        return;
-    }
 
     var bytesUnits = {
             zeroBytes: '0 bytes',
@@ -76,7 +69,4 @@
 
         return new Array(Math.max(length - str.length + 1, 0)).join('0') + str;
     };
-}(
-    typeof window !== 'undefined' ? (window.ztom = window.ztom || {}).number = {} :
-    typeof module !== 'undefined' ? module.exports :
-    null);
+}();

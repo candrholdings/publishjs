@@ -49,5 +49,5 @@
 }(
     require('assert'),
     require('../publish'),
-    require('../filesystemcache').FileSystemCache
+    require('../caches/filesystemcache').FileSystemCache
 );

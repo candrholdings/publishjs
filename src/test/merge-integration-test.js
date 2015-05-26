@@ -1,4 +1,4 @@
-!function (assert, Merge, linq) {
+!function (assert, linq) {
     'use strict';
 
     require('vows').describe('Merge integration tet').addBatch({
@@ -37,4 +37,4 @@
             }
         }
     }).export(module);
-}(require('assert'), require('../merge'), require('async-linq'));
+}(require('assert'), require('async-linq'));

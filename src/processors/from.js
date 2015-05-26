@@ -129,6 +129,6 @@
     require('async'),
     require('fs'),
     require('async-linq'),
-    require('./processor'),
+    require('../processor'),
     require('path')
 );

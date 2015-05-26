@@ -5,7 +5,7 @@
         'when repeating an action for 2 times': {
             topic: function () {
                 var callback = this.callback,
-                    cache = require('../inmemorycache')(),
+                    cache = require('../caches/inmemorycache')(),
                     inputs = {
                         'abc.txt': 'ABC'
                     },
