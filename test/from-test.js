@@ -1,4 +1,4 @@
-!function (assert, from, path, publish) {
+!function (assert, from, linq, path, publish) {
     'use strict';
 
     var processors = {
@@ -35,15 +35,18 @@
         'When merging outputs from three pipes with overlapping files': {
             topic: function () {
                 var callback = this.callback,
-                    topic = {};
+                    topic = {
+                        cache: require('../inmemorycache')(),
+                        outputs: {}
+                    };
 
-                publish({ cache: require('../inmemorycache')(), log: false, processors: processors }).build(function (pipe, callback) {
+                publish({ cache: topic.cache, log: false, processors: processors }).build(function (pipe, callback) {
                     pipe.from([
                             pipe.inputs({ abc: 'ABC1', def: 'DEF1' }),
                             pipe.inputs({ def: 'DEF2', xyz: 'XYZ1' }),
                             pipe.inputs({ xyz: 'XYZ2' })
                         ])
-                        .outputs(topic)
+                        .outputs(topic.outputs)
                         .run(callback);
                 }, function (err) {
                     callback(err, err ? null : topic);
@@ -51,16 +54,38 @@
             },
 
             'should returns merged result': function (topic) {
+                topic = topic.outputs;
+
                 assert.equal(Object.getOwnPropertyNames(topic).length, 3);
                 assert.equal(topic.abc, 'ABC1');
                 assert.equal(topic.def, 'DEF2');
                 assert.equal(topic.xyz, 'XYZ2');
+            },
+
+            'should use different cache pools': function (topic) {
+                topic = topic.cache.cache;
+
+                assert.equal(Object.getOwnPropertyNames(topic).length, 5);
+
+                assertCacheOutputs(topic['0.0-from'].outputs, { abc: 'ABC1', def: 'DEF2', xyz: 'XYZ2' });
+                assertCacheOutputs(topic['0.1-inputs'].outputs, { abc: 'ABC1', def: 'DEF1' });
+                assertCacheOutputs(topic['0.2-inputs'].outputs, { def: 'DEF2', xyz: 'XYZ1' });
+                assertCacheOutputs(topic['0.3-inputs'].outputs, { xyz: 'XYZ2' });
+                assertCacheOutputs(topic['0.4-outputs'].outputs, { abc: 'ABC1', def: 'DEF2', xyz: 'XYZ2' });
             }
         }
     }).export(module);
+
+    function assertCacheOutputs(actual, expected) {
+        assert.deepEqual(
+            linq(actual).select(function (entry) { return entry.buffer.toString(); }).run(),
+            expected
+        );
+    }
 }(
     require('assert'),
     require('../from'),
+    require('async-linq'),
     require('path'),
     require('../publish')
 );
