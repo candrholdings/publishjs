@@ -71,7 +71,11 @@
         });
     };
 
-    module.exports = FileSystemCache;
+    module.exports = function (options) {
+        return new FileSystemCache(options);
+    };
+
+    module.exports.FileSystemCache = FileSystemCache;
 }(
     require('./cacheprovider'),
     require('fs'),

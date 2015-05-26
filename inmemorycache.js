@@ -22,7 +22,11 @@
         callback();
     };
 
-    module.exports = InMemoryCache;
+    module.exports = function (options) { 
+        return new InMemoryCache(options);
+    };
+
+    module.exports.InMemoryCache = InMemoryCache;
 }(
     require('./cacheprovider'),
     require('path')

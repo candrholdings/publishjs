@@ -37,7 +37,7 @@
                 var callback = this.callback,
                     topic = {};
 
-                publish({ cache: false, log: false, processors: processors }).build(function (pipe, callback) {
+                publish({ cache: require('../inmemorycache')(), log: false, processors: processors }).build(function (pipe, callback) {
                     pipe.from([
                             pipe.inputs({ abc: 'ABC1', def: 'DEF1' }),
                             pipe.inputs({ def: 'DEF2', xyz: 'XYZ1' }),
