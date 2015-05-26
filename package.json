@@ -9,6 +9,7 @@
   ],
   "license": "MIT",
   "email": "william.wong@candrholdings.com",
+  "main": "publish.js",
   "scripts": {
     "test": "vows test/*-test.js --spec"
   },
