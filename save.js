@@ -23,14 +23,15 @@
         }).run(function (err) {
             if (!err) {
                 var allCount = Object.getOwnPropertyNames(inputs.all).length,
-                    displayPath = path.relative(process.cwd(), dirpath).replace(/\\/g, '/');
+                    displayPath = path.relative(process.cwd(), dirpath).replace(/\\/g, '/'),
+                    displayableFiles = linq(inputs.newOrChanged).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
 
                 if (allCount && !Object.getOwnPropertyNames(inputs.newOrChanged).length) {
-                    that.log('No new changes to save to ./' + displayPath + ', there are ' + allCount + ' file(s) unchanged');
+                    that.log('No new changes to save to ./' + displayPath + ' because all ' + allCount + ' file(s) were unchanged');
                 } else if (!allCount) {
                     that.log('No files to save to ./' + displayPath);
                 } else {
-                    that.log('Saving changed files to ./' + displayPath + '\n' + Object.getOwnPropertyNames(inputs.newOrChanged).map(indent).join('\n'));
+                    that.log('Saving changed files to ./' + displayPath + ', including ' + displayableFiles.join(', ') + (displayableFiles.length !== allCount ? '\u2026' : ''));
                 }
             }
 

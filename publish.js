@@ -84,10 +84,10 @@
 
         async.series(linq(tasks).toArray(function (fn, nameOrIndex) {
             return function (callback) {
-                console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" started'));
+                console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
                 fn.call(that, that._createPipe(nameOrIndex), function (err) {
-                    console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
+                    console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
                 });
             };
         }).run(), callback);
