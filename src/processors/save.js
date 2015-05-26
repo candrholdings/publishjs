@@ -18,7 +18,7 @@
             mkdirp(path.dirname(filename), function (err) {
                 if (err) { return callback(err); }
 
-                fs.writeFile(filename, entry.buffer, callback);
+                fs.writeFile(filename, entry, callback);
             });
         }).run(function (err) {
             if (!err) {

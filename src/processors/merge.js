@@ -89,7 +89,9 @@
                     map = map[segment] || (map[segment] = {});
                 });
 
-                map[lastSegment] = entry;
+                map[lastSegment] = {
+                    buffer: entry
+                };
             })
             .run();
 

@@ -33,7 +33,8 @@
     };
 
     Processor.prototype._getFiles = function (files, callback) {
-        var that = this;
+        var that = this,
+            options = that.options || {};
 
         if ({}.toString.call(files) !== '[object Object]') {
             return callback(new Error('files not a plain object'));
@@ -48,7 +49,7 @@
                 newOrChanged,
                 existingOutputs;
 
-            if (anyFilesDeleted || that.options.clean) {
+            if (anyFilesDeleted || options.clean) {
                 // If there are any files deleted, we will need to mark all files as changed and re-run the whole processor
 
                 newOrChanged = files;
@@ -83,6 +84,10 @@
         this._saveCache(inputs, outputs, callback);
     };
 
+    function selectBuffer(map) {
+        return linq(map).select(function (entry) { return entry.buffer; }).run();
+    }
+
     Processor.prototype.run = function (sessionID, inputs, args, callback) {
         var that = this;
 
@@ -96,9 +101,16 @@
                 var files = results.files,
                     runArgs = [].slice.call(args || []);
 
-                runArgs.splice(0, 0, files.inputs, linq(files.outputs.existing).select(function (output) {
-                    return output.buffer;
-                }).run());
+                runArgs.splice(
+                    0,
+                    0,
+                    {
+                        all: selectBuffer(files.inputs.all),
+                        newOrChanged: selectBuffer(files.inputs.newOrChanged),
+                        unchanged: selectBuffer(files.inputs.unchanged)
+                    },
+                    selectBuffer(files.outputs.existing)
+                );
 
                 runArgs.push(callback);
 

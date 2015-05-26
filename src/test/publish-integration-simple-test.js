@@ -15,7 +15,7 @@
                                 assert.equal(this.options.assertion, '123');
 
                                 linq(inputs.newOrChanged).select(function (entry, filename) {
-                                    outputs[filename + '.dummy'] = entry.buffer.toString() + '.dummy';
+                                    outputs[filename + '.dummy'] = entry.toString() + '.dummy';
                                 }).run();
 
                                 callback(null, outputs);

@@ -13,7 +13,7 @@
                                 var that = this;
 
                                 linq(inputs.newOrChanged).select(function (entry, filename) {
-                                    outputs[filename] = transformer(entry.buffer.toString());
+                                    outputs[filename] = transformer(entry.toString());
                                 }).run();
 
                                 callback(null, outputs);

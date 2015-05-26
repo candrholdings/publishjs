@@ -4,22 +4,22 @@
     require('vows').describe('Merge utility functions').addBatch({
         'When expanding a flatten filelist': {
             topic: Merge._sortAndSplitIntoMap({
-                'abc.txt': { text: 'abc.txt' },
-                'dir1/xyz.txt': { text: 'dir1/xyz.txt' },
-                'dir1/def.txt': { text: 'dir1/def.txt' },
-                'dir1/dir2/abc.txt': { text: 'dir1/dir2/abc.txt' },
-                'dir1/abc.txt': { text: 'dir1/abc.txt' }
+                'abc.txt': 'abc.txt',
+                'dir1/xyz.txt': 'dir1/xyz.txt',
+                'dir1/def.txt': 'dir1/def.txt',
+                'dir1/dir2/abc.txt': 'dir1/dir2/abc.txt',
+                'dir1/abc.txt': 'dir1/abc.txt'
             }),
 
             'should returns a map': function (topic) {
                 assert.deepEqual(topic, {
-                    'abc.txt': { text: 'abc.txt', unrank: 1 },
+                    'abc.txt': { buffer: 'abc.txt', unrank: 1 },
                     'dir1/': {
-                        'abc.txt': { text: 'dir1/abc.txt', unrank: 2 },
-                        'def.txt': { text: 'dir1/def.txt', unrank: 3 },
-                        'xyz.txt': { text: 'dir1/xyz.txt', unrank: 4 },
+                        'abc.txt': { buffer: 'dir1/abc.txt', unrank: 2 },
+                        'def.txt': { buffer: 'dir1/def.txt', unrank: 3 },
+                        'xyz.txt': { buffer: 'dir1/xyz.txt', unrank: 4 },
                         'dir2/': {
-                            'abc.txt': { text: 'dir1/dir2/abc.txt', unrank: 5 }
+                            'abc.txt': { buffer: 'dir1/dir2/abc.txt', unrank: 5 }
                         }
                     }
                 });

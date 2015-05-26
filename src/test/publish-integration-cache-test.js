@@ -15,7 +15,7 @@
                             var that = this;
 
                             linq(inputs.newOrChanged).select(function (entry, filename) {
-                                outputs[filename + '.out'] = entry.buffer.toString() + text;
+                                outputs[filename + '.out'] = entry.toString() + text;
                             }).run();
 
                             callback(null, outputs);

@@ -50,7 +50,7 @@
         return function () {
             var callback = this.callback;
 
-            inputs = linq(inputs).select(function (content) { return { buffer: new Buffer(content) }; }).run();
+            inputs = linq(inputs).select(function (content) { return new Buffer(content); }).run();
 
             Merge.call({ log: function () {} }, { all: inputs, newOrChanged: inputs }, {}, outputFilename, function (err, outputs) {
                 if (err) { return callback(err); }
