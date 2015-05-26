@@ -87,13 +87,23 @@
             return function (callback) {
                 that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
-                fn.call(that, that._createPipe(nameOrIndex), function (err) {
+                fn.call(that, that._createPipe(nameOrIndex), function (err, outputs) {
                     that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
-                    callback();
+                    callback(err, err ? null : outputs);
                 });
             };
-        }).run(), function (err) {
-            callback(err);
+        }).run(), function (err, outputs) {
+            if (err) { return callback(err); }
+
+            var result = {};
+
+            outputs.forEach(function (output) {
+                Object.getOwnPropertyNames(output).forEach(function (filename) {
+                    result[filename] = output[filename].buffer;
+                });
+            });
+
+            callback(null, result);
         });
     };
 
