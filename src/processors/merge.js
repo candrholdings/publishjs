@@ -1,4 +1,4 @@
-!function (Processor, linq, number, path, BufferAppender) {
+!function (Processor, linq, number, path, replacePatterns, BufferAppender) {
     'use strict';
 
     module.exports = function (inputs, outputs, outputFilename, callback) {
@@ -125,14 +125,9 @@
                 replacePatterns(
                     line,
                     [
-                        /\./,
-                        /(\/)/,
-                        /\*/
-                    ],
-                    [
-                        '\\.',
-                        '(?:\\/)',
-                        '.*?'
+                        [/\./, '\\.'],
+                        [/(\/)/, '(?:\\/)'],
+                        [/\*/, '.*?']
                     ]
                 ) +
                 '$'
@@ -140,59 +135,6 @@
         }
 
         return result;
-    }
-
-    function replacePatterns(input, patterns, replaces) {
-        var lastIndex = 0,
-            outputs = [{
-                processed: 0,
-                text: input
-            }],
-            found;
-
-        do {
-            found = 0;
-
-            outputs.every(function (output, index) {
-                if (output.processed) {
-                    return true;
-                }
-
-                patterns.every(function (pattern, patternIndex) {
-                    var text = output.text,
-                        match = pattern.exec(text),
-                        matchIndex,
-                        matchLength;
-
-                    if (!match) { return true; }
-
-                    found = 1;
-                    matchIndex = match.index;
-                    matchLength = match[0].length;
-
-                    var before = text.substr(0, matchIndex),
-                        changed = match[0],
-                        after = text.substr(matchIndex + matchLength),
-                        spliceArgs = [index, 1];
-
-                    before && spliceArgs.push({ processed: 0, text: before });
-                    spliceArgs.push({ processed: 1, text: changed.replace(pattern, replaces[patternIndex]) });
-                    after && spliceArgs.push({ processed: 0, text: after });
-
-                    outputs.splice.apply(outputs, spliceArgs);
-
-                    return false;
-                });
-
-                if (!found) {
-                    output.processed = 1;
-                }
-
-                return !found;
-            });
-        } while (found);
-
-        return outputs.map(function (output) { return output.text; }).join('');
     }
 
     function flattenRecursive(map, prefix, newMap) {
@@ -312,7 +254,6 @@
 
     // Functions exposed for unit testing
     module.exports._sortAndSplitIntoMap = sortAndSplitIntoMap;
-    module.exports._replacePatterns = replacePatterns;
     module.exports._flattenRecursive = flattenRecursive;
     module.exports._rankFilesInplace = rankFilesInplace;
     module.exports._parseDirectiveLine = parseDirectiveLine;
@@ -322,5 +263,6 @@
     require('async-linq'),
     require('../util/number'),
     require('path'),
+    require('../util/regexp').replacePatterns,
     require('../util/bufferappender')
 );

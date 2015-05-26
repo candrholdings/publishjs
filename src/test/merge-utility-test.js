@@ -26,14 +26,6 @@
             }
         },
 
-        'When replacing multiple patterns': {
-            topic: Merge._replacePatterns('a1b2c3', [/c(3)/, /a(1)/], ['a$1', 'c$1']),
-
-            'should returns text': function (topic) {
-                assert.equal(topic, 'c1b2a3');
-            }
-        },
-
         'When flattening a map recursively': {
             topic: function () {
                 var input = {

@@ -78,7 +78,7 @@
                     if (err) { throw err; }
 
                     assert.deepEqual(outputs, {
-                        'xyz.txt': 'ABC',
+                        'xyz.txt': 'ABC'
                     });
                 });
             }
