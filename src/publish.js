@@ -113,6 +113,13 @@
 
         return new PublishJS(options);
     };
+
+    // Exposing some utilities
+
+    module.exports.util = {
+        number: require('./util/number'),
+        time: require('./util/time')
+    };
 }(
     require('async'),
     require('./caches/filesystemcache'),
