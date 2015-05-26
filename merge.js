@@ -7,7 +7,7 @@
             callback = arguments[2];
         }
 
-        if (!linq(inputs.newOrChanged).count().run()) { return callback(); }
+        if (!linq(inputs.newOrChanged).count().run()) { return callback(null, {}); }
 
         var inputMap = sortAndSplitIntoMap(inputs.all),
             sorted;
