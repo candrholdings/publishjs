@@ -41,14 +41,14 @@
             return callback(new Error('One or more entry in files is invalid'));
         }
 
-        this._loadCache(function (err, inputCache, outputCache) {
+        that._loadCache(function (err, inputCache, outputCache) {
             if (err) { return callback(err); }
 
             var anyFilesDeleted = linq(inputCache).any(function (_, filename) { return !files[filename]; }).run(),
                 newOrChanged,
                 existingOutputs;
 
-            if (anyFilesDeleted) {
+            if (anyFilesDeleted || that.options.clean) {
                 // If there are any files deleted, we will need to mark all files as changed and re-run the whole processor
 
                 newOrChanged = files;
