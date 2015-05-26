@@ -1,26 +1,79 @@
 !function (async, fs, linq, Processor, path) {
     'use strict';
 
-    module.exports = function (inputs, outputs, dirpath, callback) {
-        dirpath = path.resolve(this.options.basedir || '.', dirpath);
+    module.exports = function (inputs, outputs, dirpaths, callback) {
+        var that = this;
 
-        var that = this,
-            displayablePath = path.relative(process.cwd(), dirpath).replace(/\\/, '/');
-
-        try {
-            crawl(dirpath, function (err, outputs) {
-                if (!err) {
-                    var outputCount = Object.getOwnPropertyNames(outputs).length,
-                        displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
-
-                    that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs ? '\u2026' : ''));
-                }
-
-                callback(err, err ? null : outputs);
-            });
-        } catch (ex) {
-            callback(ex);
+        if ({}.toString.call(dirpaths) !== '[object Array]') {
+            dirpaths = [dirpaths];
         }
+
+        dirpaths.forEach(function (dirpath, index) {
+            if (typeof dirpath === 'string') {
+                dirpaths.splice(index, 1, path.resolve(that.options.basedir || '.', dirpath));
+            }
+        });
+
+        var results = [];
+
+        linq(dirpaths).async.select(function (dirpath, index, callback) {
+            if (typeof dirpath === 'string') {
+                var displayablePath = path.relative(process.cwd(), dirpath).replace(/\\/, '/');
+
+                try {
+                    crawl(dirpath, function (err, outputs) {
+                        if (!err) {
+                            var outputCount = Object.getOwnPropertyNames(outputs).length,
+                                displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
+
+                            that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs ? '\u2026' : ''));
+
+                            results.push(outputs);
+
+                            // Object.getOwnPropertyNames(outputs).forEach(function (filename) {
+                            //     if (result[filename]) {
+                            //         that.log('Warning, ' + filename + ' is loaded twice, last writer will win');
+                            //     }
+
+                            //     result[filename] = outputs[filename];
+                            // });
+                        }
+
+                        callback(err);
+                    });
+                } catch (ex) {
+                    callback(ex);
+                }
+            } else {
+                dirpath.run(function (err, result) {
+                    if (!err) {
+                        Object.getOwnPropertyNames(result).forEach(function (filename) {
+                            result[filename] = result[filename].buffer;
+                        });
+
+                        results.push(result);
+                    }
+
+                    callback(err);
+                });
+            }
+        }).run(function (err) {
+            if (err) { return callback(err); }
+
+            var combined = {};
+
+            results.forEach(function (result) {
+                Object.getOwnPropertyNames(result).forEach(function (filename) {
+                    if (combined[filename]) {
+                        that.log('Warning, ' + filename + ' has been loaded, last writer win strategy applies');
+                    }
+
+                    combined[filename] = result[filename];
+                });
+            });
+
+            callback(null, combined);
+        });
     };
 
     function crawl(basedir, callback) {

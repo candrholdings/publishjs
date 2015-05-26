@@ -7,6 +7,7 @@
                 var callback = this.callback,
                     publish = require('../publish')({
                         cache: false,
+                        log: false,
                         processors: {
                             transform: function (inputs, outputs, transformer, callback) {
                                 var that = this;

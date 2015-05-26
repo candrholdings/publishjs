@@ -7,6 +7,7 @@
                 var callback = this.callback,
                     publish = require('../publish')({
                         cache: false,
+                        log: false,
                         processors: {
                             dummy: function (inputs, outputs, arg1, arg2, callback) {
                                 assert.equal(arg1, 'dummy-arg1');

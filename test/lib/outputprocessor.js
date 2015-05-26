@@ -6,7 +6,9 @@
             fileSystem[filename] = inputs.all[filename].buffer;
         });
 
-        callback(null, outputs);
+        callback(null, linq(inputs.all).select(function (entry) {
+            return entry.buffer;
+        }).run());
     };
 }(
     require('async-linq'),

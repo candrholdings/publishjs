@@ -26,7 +26,7 @@
 
                 async.series([
                     function (callback) {
-                        require('../publish')({ cache: cache, processors: processors }).build([
+                        require('../publish')({ cache: cache, log: false, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')
@@ -36,7 +36,7 @@
                         ], callback);
                     },
                     function (callback) {
-                        require('../publish')({ cache: cache, processors: processors }).build([
+                        require('../publish')({ cache: cache, log: false, processors: processors }).build([
                             function (pipe, callback) {
                                 pipe.input(inputs)
                                     .append('.1')

@@ -22,16 +22,17 @@
             });
         }).run(function (err) {
             if (!err) {
-                var allCount = Object.getOwnPropertyNames(inputs.all).length,
+                var numAll = Object.getOwnPropertyNames(inputs.all).length,
+                    numNewOrChanged = Object.getOwnPropertyNames(inputs.newOrChanged).length,
                     displayPath = path.relative(process.cwd(), dirpath).replace(/\\/g, '/'),
                     displayableFiles = linq(inputs.newOrChanged).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
 
-                if (allCount && !Object.getOwnPropertyNames(inputs.newOrChanged).length) {
-                    that.log('No new changes to save to ./' + displayPath + ' because all ' + allCount + ' file(s) were unchanged');
-                } else if (!allCount) {
+                if (numAll && !numNewOrChanged) {
+                    that.log('No new changes to save to ./' + displayPath + ' because all ' + numAll + ' file(s) were unchanged');
+                } else if (!numAll) {
                     that.log('No files to save to ./' + displayPath);
                 } else {
-                    that.log('Saving changed files to ./' + displayPath + ', including ' + displayableFiles.join(', ') + (displayableFiles.length !== allCount ? '\u2026' : ''));
+                    that.log('Saving ' + numNewOrChanged + ' new or changed file(s) to ./' + displayPath + ', including ' + displayableFiles.join(', ') + (displayableFiles.length !== numAll ? '\u2026' : ''));
                 }
             }
 

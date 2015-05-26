@@ -84,13 +84,16 @@
 
         async.series(linq(tasks).toArray(function (fn, nameOrIndex) {
             return function (callback) {
-                console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
+                that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
                 fn.call(that, that._createPipe(nameOrIndex), function (err) {
-                    console.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
+                    that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
+                    callback();
                 });
             };
-        }).run(), callback);
+        }).run(), function (err) {
+            callback(err);
+        });
     };
 
     PublishJS.prototype._createPipe = function (pipeID) {
