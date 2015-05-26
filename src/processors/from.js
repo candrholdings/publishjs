@@ -26,7 +26,7 @@
                             var outputCount = Object.getOwnPropertyNames(outputs).length,
                                 displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
 
-                            that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs ? '\u2026' : ''));
+                            that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs.length ? '\u2026' : ''));
 
                             results.push(outputs);
                         }
