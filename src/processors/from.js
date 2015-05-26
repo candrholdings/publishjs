@@ -29,14 +29,6 @@
                             that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs ? '\u2026' : ''));
 
                             results.push(outputs);
-
-                            // Object.getOwnPropertyNames(outputs).forEach(function (filename) {
-                            //     if (result[filename]) {
-                            //         that.log('Warning, ' + filename + ' is loaded twice, last writer will win');
-                            //     }
-
-                            //     result[filename] = outputs[filename];
-                            // });
                         }
 
                         callback(err);
@@ -67,7 +59,7 @@
             results.forEach(function (result) {
                 Object.getOwnPropertyNames(result).forEach(function (filename) {
                     if (combined[filename]) {
-                        that.log('Warning, ' + filename + ' has been loaded, last writer win strategy applies');
+                        that.log('Warning, ' + filename + ' has been loaded twice, will overwrite');
                     }
 
                     combined[filename] = result[filename];
