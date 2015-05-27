@@ -1,60 +1,96 @@
-!function () {
+!function (async) {
     'use strict';
 
-    function replacePatterns(input, pairs) {
-        var lastIndex = 0,
-            outputs = [{
-                processed: 0,
-                text: input
-            }],
+    function replacePatternsAsync(input, pairs, callback) {
+        var outputs = [{ text: input, index: 0 }],
             found;
 
-        do {
+        async.doWhilst(function (callback) {
+            var index = -1;
+
             found = 0;
 
-            outputs.every(function (output, index) {
-                if (output.processed) {
-                    return true;
-                }
+            async.every(outputs, function (output, callback) {
+                if (++index % 2) { return callback(true); }
 
-                pairs.every(function (pair) {
-                    var pattern = pair[0],
-                        replace = pair[1],
-                        text = output.text,
-                        match = pattern.exec(text),
-                        matchIndex,
-                        matchLength;
+                // console.log(outputs);
 
-                    if (!match) { return true; }
+                async.every(pairs, function (pair, callback) {
+                    var match = pair[0].exec(output.text);
+
+                    if (!match) { return callback(true); }
 
                     found = 1;
-                    matchIndex = match.index;
-                    matchLength = match[0].length;
 
-                    var before = text.substr(0, matchIndex),
-                        changed = match[0],
-                        after = text.substr(matchIndex + matchLength),
-                        spliceArgs = [index, 1];
+                    var replaceArgs = [].slice.call(match);
 
-                    before && spliceArgs.push({ processed: 0, text: before });
-                    spliceArgs.push({ processed: 1, text: changed.replace(pattern, replace) });
-                    after && spliceArgs.push({ processed: 0, text: after });
+                    replaceArgs.push(output.index + match.index);
+                    replaceArgs.push(input);
+                    replaceArgs.push(function (err, replacement) {
+                        var spliceArgs = [index, 1];
 
-                    outputs.splice.apply(outputs, spliceArgs);
+                        spliceArgs.push({ text: output.text.substr(0, match.index), index: output.index });
+                        spliceArgs.push({ text: replacement });
+                        spliceArgs.push({ text: output.text.substr(match.index + match[0].length), index: output.index + match.index + match[0].length });
 
-                    return false;
-                });
+                        outputs.splice.apply(outputs, spliceArgs);
 
-                if (!found) {
-                    output.processed = 1;
-                }
+                        callback(false);
+                    });
 
-                return !found;
+                    pair[1].apply(null, replaceArgs);
+                }, callback);
+            }, function () {
+                callback();
             });
-        } while (found);
+        }, function () {
+            return found;
+        }, function (err) {
+            callback(err, err ? null : outputs.map(function (output) { return output.text; }).join(''));
+        });
+    }
 
-        return outputs.map(function (output) { return output.text; }).join('');
+    function replacePatterns(input, pairs) {
+        var err, result;
+
+        pairs = pairs.map(function (pair) {
+            var pattern = pair[0],
+                replacement = pair[1];
+
+            return [
+                pattern,
+                typeof replacement === 'function' ?
+                    function () {
+                        var callback = arguments[arguments.length - 1];
+
+                        callback(null, replacement.apply(null, [].slice.call(arguments, 0, arguments.length - 1)));
+                    } :
+                    function (match0) {
+                        var callback = arguments[arguments.length - 1];
+                        
+                        callback(null, match0.replace(pattern, replacement));
+                    }
+            ];
+        });
+
+        replacePatternsAsync(
+            input,
+            pairs,
+            function (e, r) {
+                err = e;
+                result = r;
+            }
+        );
+
+        if (err) {
+            throw err;
+        } else {
+            return result;
+        }
     }
 
     module.exports.replacePatterns = replacePatterns;
-}();
+    module.exports.replacePatternsAsync = replacePatternsAsync;
+}(
+    require('async')
+);
