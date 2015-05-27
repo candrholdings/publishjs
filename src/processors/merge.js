@@ -1,4 +1,4 @@
-!function (Processor, linq, number, path, replacePatterns, BufferAppender) {
+!function (Processor, linq, number, path, replaceMultiple, BufferAppender) {
     'use strict';
 
     module.exports = function (inputs, outputs, outputFilename, callback) {
@@ -122,7 +122,7 @@
         } else {
             result.pattern = new RegExp(
                 '^' +
-                replacePatterns(
+                replaceMultiple(
                     line,
                     [
                         [/\./, '\\.'],
@@ -263,6 +263,6 @@
     require('async-linq'),
     require('../util/number'),
     require('path'),
-    require('../util/regexp').replacePatterns,
+    require('../util/regexp').replaceMultiple,
     require('../util/bufferappender')
 );

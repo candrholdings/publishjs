@@ -1,7 +1,7 @@
 !function (async) {
     'use strict';
 
-    function replacePatternsAsync(input, pairs, callback) {
+    function replaceMultipleAsync(input, pairs, callback) {
         var outputs = [{ text: input, index: 0 }],
             found;
 
@@ -50,7 +50,7 @@
         });
     }
 
-    function replacePatterns(input, pairs) {
+    function replaceMultiple(input, pairs) {
         var err, result;
 
         pairs = pairs.map(function (pair) {
@@ -73,7 +73,7 @@
             ];
         });
 
-        replacePatternsAsync(
+        replaceMultipleAsync(
             input,
             pairs,
             function (e, r) {
@@ -89,8 +89,8 @@
         }
     }
 
-    module.exports.replacePatterns = replacePatterns;
-    module.exports.replacePatternsAsync = replacePatternsAsync;
+    module.exports.replaceMultiple = replaceMultiple;
+    module.exports.replaceMultipleAsync = replaceMultipleAsync;
 }(
     require('async')
 );
