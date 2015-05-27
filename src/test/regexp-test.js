@@ -2,7 +2,7 @@
     'use strict';
 
     require('vows').describe('RegExp utility test').addBatch({
-        'When replacing multiple Multiple': {
+        'When replacing multiple patterns': {
             topic: regexp.replaceMultiple('a1b2c3', [[/c(3)/, 'a$1'], [/a(1)/, 'c$1']]),
 
             'should returns text': function (topic) {
@@ -40,24 +40,26 @@
             }
         },
 
-        'When replacing abcdefxyz with a custom async function that change "abc" to "B" and "xyz" to "Y"': {
+        'When replacing "abcdefxyz" with a custom async function that change "abc" to "B" and "xyz" to "Y"': {
             topic: function () {
                 var callback = this.callback;
 
                 regexp.replaceMultipleAsync('abcdefxyz', [[/(?:[ax])(\w)\w/, function (match0, match1, index, original, callback) {
-                    if (match0 === 'abc') {
-                        assert.equal(match1, 'b');
-                        assert.equal(index, 0);
-                    } else if (match0 === 'xyz') {
-                        assert.equal(match1, 'y');
-                        assert.equal(index, 6);
-                    } else {
-                        assert(0);
-                    }
+                    process.nextTick(function () {
+                        if (match0 === 'abc') {
+                            assert.equal(match1, 'b');
+                            assert.equal(index, 0);
+                        } else if (match0 === 'xyz') {
+                            assert.equal(match1, 'y');
+                            assert.equal(index, 6);
+                        } else {
+                            assert(0);
+                        }
 
-                    assert.equal(original, 'abcdefxyz');
+                        assert.equal(original, 'abcdefxyz');
 
-                    callback(null, match1.toUpperCase());
+                        callback(null, match1.toUpperCase());
+                    });
                 }]], callback)
             },
 
