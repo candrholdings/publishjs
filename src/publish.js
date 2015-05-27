@@ -128,6 +128,7 @@
 
     module.exports.util = {
         number: require('./util/number'),
+        regexp: require('./util/regexp'),
         time: require('./util/time')
     };
 }(
