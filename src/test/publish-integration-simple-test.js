@@ -20,8 +20,7 @@
 
                                 callback(null, outputs);
                             },
-                            input: require('./lib/inputprocessor'),
-                            output: require('./lib/outputprocessor')
+                            input: require('./lib/inputprocessor')
                         },
                         assertion: '123'
                     }),
@@ -30,14 +29,13 @@
                 publish.build(function (pipe, callback) {
                     pipe.input({ 'abc.txt': 'ABC' })
                         .dummy('dummy-arg1', 'dummy-arg2')
-                        .output(topic)
                         .run(callback);
-                }, function (err) {
-                    callback(err, err ? null : topic);
-                });
+                }, callback);
             },
 
             'should returns output': function (topic) {
+                topic = topic.all;
+
                 assert.equal(Object.getOwnPropertyNames(topic).length, 1);
                 assert.equal(topic['abc.txt.dummy'].toString(), 'ABC.dummy');
             }

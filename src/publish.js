@@ -95,16 +95,34 @@
         }).run(), function (err, outputs) {
             if (err) { return callback(err); }
 
-            var result = {};
+            var combined = {};
 
             outputs.forEach(function (output) {
                 Object.getOwnPropertyNames(output).forEach(function (filename) {
-                    result[filename] = output[filename].buffer;
+                    combined[filename] = output[filename];
                 });
             });
 
-            callback(null, result);
+            that._finalize(combined, callback);
         });
+    };
+
+    PublishJS.prototype._finalize = function (files, callback) {
+        var options = this.options,
+            result,
+            finalizer = new Processor('__finalizer', options, function (inputs, outputs, callback) {
+                result = inputs;
+                callback(null, inputs.all);
+            });
+
+        finalizer.run(
+            'final',
+            files,
+            [],
+            function (err) {
+                callback(err, err ? null : result);
+            }
+        );
     };
 
     PublishJS.prototype._createPipe = function (pipeID) {

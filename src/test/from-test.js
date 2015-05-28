@@ -46,15 +46,19 @@
                             pipe.inputs({ def: 'DEF2', xyz: 'XYZ1' }),
                             pipe.inputs({ xyz: 'XYZ2' })
                         ])
-                        .outputs(topic.outputs)
                         .run(callback);
-                }, function (err) {
-                    callback(err, err ? null : topic);
+                }, function (err, result) {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        topic.outputs = result;
+                        callback(null, topic);
+                    }
                 });
             },
 
             'should returns merged result': function (topic) {
-                topic = topic.outputs;
+                topic = topic.outputs.all;
 
                 assert.equal(Object.getOwnPropertyNames(topic).length, 3);
                 assert.equal(topic.abc, 'ABC1');
@@ -71,7 +75,7 @@
                 assertCacheOutputs(topic['0.1-inputs'].outputs, { abc: 'ABC1', def: 'DEF1' });
                 assertCacheOutputs(topic['0.2-inputs'].outputs, { def: 'DEF2', xyz: 'XYZ1' });
                 assertCacheOutputs(topic['0.3-inputs'].outputs, { xyz: 'XYZ2' });
-                assertCacheOutputs(topic['0.4-outputs'].outputs, { abc: 'ABC1', def: 'DEF2', xyz: 'XYZ2' });
+                assertCacheOutputs(topic['final'].outputs, { abc: 'ABC1', def: 'DEF2', xyz: 'XYZ2' });
             }
         }
     }).export(module);
