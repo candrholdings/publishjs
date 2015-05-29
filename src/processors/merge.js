@@ -7,7 +7,7 @@
             callback = arguments[2];
         }
 
-        if (!linq(inputs.newOrChanged).count().run()) { return callback(null, {}); }
+        if (!linq(inputs.newOrChanged).count().run()) { return callback(null, outputs); }
 
         var inputMap = sortAndSplitIntoMap(inputs.all),
             sorted;
@@ -25,7 +25,7 @@
         if (sorted.length === 0) {
             this.log('Nothing to merge');
 
-            return callback(null, {});
+            return callback(null, outputs);
         }
 
         if (!outputFilename) {

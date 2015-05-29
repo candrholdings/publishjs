@@ -88,7 +88,7 @@
                 that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
                 fn.call(that, that._createPipe(nameOrIndex), function (err, outputs) {
-                    that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is ' + (err ? 'failed\n\n' + err.stack : 'succeeded')));
+                    that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n'));
                     callback(err, err ? null : outputs);
                 });
             };
@@ -111,8 +111,11 @@
         var options = this.options,
             result,
             finalizer = new Processor('__finalizer', options, function (inputs, outputs, callback) {
-                result = inputs;
-                callback(null, inputs.all);
+                Object.getOwnPropertyNames(inputs.all).forEach(function (filename) {
+                    outputs[filename] = inputs.all[filename];
+                });
+
+                callback(null, outputs);
             });
 
         finalizer.run(

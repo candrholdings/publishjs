@@ -20,6 +20,8 @@
 
                 fs.writeFile(filename, entry, callback);
             });
+
+            outputs[filename] = entry;
         }).run(function (err) {
             if (!err) {
                 var numAll = Object.getOwnPropertyNames(inputs.all).length,
@@ -36,7 +38,7 @@
                 }
             }
 
-            callback(err, inputs.newOrChanged);
+            callback(err, err ? null : outputs);
         });
     };
 }(
