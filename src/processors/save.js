@@ -36,11 +36,9 @@
                 }
             }
 
-            callback(err, {});
+            callback(err, inputs.newOrChanged);
         });
     };
-
-    function indent(str) { return '  ' + str; }
 }(
     require('async'),
     require('fs'),
