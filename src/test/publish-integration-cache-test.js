@@ -24,22 +24,32 @@
 
                 async.series([
                     function (callback) {
-                        require('../publish')({ cache: cache, log: false, processors: processors }).build([
-                            function (pipe, callback) {
-                                pipe.input({'abc.txt': 'ABC', 'def.txt': 'DEF'})
-                                    .append('.1')
-                                    .run(callback);
-                            }
-                        ], callback);
+                        require('../publish')({
+                            cache: cache,
+                            log: false,
+                            processors: processors,
+                            pipes: [
+                                function (pipe, callback) {
+                                    pipe.input({'abc.txt': 'ABC', 'def.txt': 'DEF'})
+                                        .append('.1')
+                                        .run(callback);
+                                }
+                            ]
+                        }).build(callback);
                     },
                     function (callback) {
-                        require('../publish')({ cache: cache, log: false, processors: processors }).build([
-                            function (pipe, callback) {
-                                pipe.input({'abc.txt': 'ABC', 'def.txt': 'XYZ'})
-                                    .append('.2')
-                                    .run(callback);
-                            }
-                        ], callback);
+                        require('../publish')({ 
+                            cache: cache,
+                            log: false,
+                            processors: processors,
+                            pipes: [
+                                function (pipe, callback) {
+                                    pipe.input({'abc.txt': 'ABC', 'def.txt': 'XYZ'})
+                                        .append('.2')
+                                        .run(callback);
+                                }
+                            ]
+                        }).build(callback);
                     }
                 ], function (err, results) {
                     callback(err, err ? null : results[1]);

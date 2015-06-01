@@ -22,15 +22,16 @@
                             },
                             input: require('./lib/inputprocessor')
                         },
-                        assertion: '123'
+                        assertion: '123',
+                        pipes: [function (pipe, callback) {
+                            pipe.input({ 'abc.txt': 'ABC' })
+                                .dummy('dummy-arg1', 'dummy-arg2')
+                                .run(callback);
+                        }]
                     }),
                     topic = {};
 
-                publish.build(function (pipe, callback) {
-                    pipe.input({ 'abc.txt': 'ABC' })
-                        .dummy('dummy-arg1', 'dummy-arg2')
-                        .run(callback);
-                }, callback);
+                publish.build(callback);
             },
 
             'should returns output': function (topic) {

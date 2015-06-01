@@ -3,7 +3,7 @@
 
     require('vows').describe('Cache options in "publish" module').addBatch({
         'When passing null': {
-            topic: publish({ cache: null }).options.cache,
+            topic: publish({ cache: null, pipes: [] }).options.cache,
             'should cache by FileSystemCache': function (topic) {
                 assert(topic instanceof FileSystemCache);
             },
@@ -13,14 +13,14 @@
         },
 
         'When passing false': {
-            topic: publish({ cache: false }).options.cache,
+            topic: publish({ cache: false, pipes: [] }).options.cache,
             'should not returns any cache': function (topic) {
                 assert(!topic);
             }
         },
 
         'When passing a string': {
-            topic: publish({ cache: 'path/' }).options.cache,
+            topic: publish({ cache: 'path/', pipes: [] }).options.cache,
             'should cache by FileSystemCache': function (topic) {
                 assert(topic instanceof FileSystemCache);
             },

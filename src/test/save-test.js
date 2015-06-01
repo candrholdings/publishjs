@@ -19,19 +19,20 @@
                         cache: false,
                         log: false,
                         output: basedir,
-                        processors: processors
-                    }).build(function (pipe, callback) {
-                        pipe.inputs({
-                                'abc.txt': 'ABC',
-                                '1/abc.txt': '1ABC',
-                                '1/def.txt': '1DEF',
-                                '2/abc.txt': '2ABC',
-                                '2/def.txt': '2DEF',
-                                '2/xyz.txt': '2XYZ'
-                            })
-                            .save('1/')
-                            .run(callback);
-                    }, callback);
+                        processors: processors,
+                        pipes: [function (pipe, callback) {
+                            pipe.inputs({
+                                    'abc.txt': 'ABC',
+                                    '1/abc.txt': '1ABC',
+                                    '1/def.txt': '1DEF',
+                                    '2/abc.txt': '2ABC',
+                                    '2/def.txt': '2DEF',
+                                    '2/xyz.txt': '2XYZ'
+                                })
+                                .save('1/')
+                                .run(callback);
+                        }]
+                    }).build(callback);
                 });
             },
 
@@ -62,14 +63,15 @@
                         cache: false,
                         log: false,
                         output: basedir,
-                        processors: processors
-                    }).build(function (pipe, callback) {
-                        pipe.inputs({
-                                'abc.txt': 'ABC',
-                            })
-                            .save('2/xyz.txt')
-                            .run(callback);
-                    }, callback);
+                        processors: processors,
+                        pipes: [function (pipe, callback) {
+                            pipe.inputs({
+                                    'abc.txt': 'ABC',
+                                })
+                                .save('2/xyz.txt')
+                                .run(callback);
+                        }]
+                    }).build(callback);
                 });
             },
 
@@ -92,12 +94,13 @@
             cache: false,
             basedir: basedir,
             log: false,
-            processors: processors
-        }).build(function (pipe, callback) {
-            pipe.from(path)
-                .outputs(result)
-                .run(callback);
-        }, function (err) {
+            processors: processors,
+            pipes: [function (pipe, callback) {
+                pipe.from(path)
+                    .outputs(result)
+                    .run(callback);
+            }]
+        }).build(function (err) {
             callback(err, err ? null : linq(result).select(function (buffer) {
                 return buffer.toString();
             }).run());

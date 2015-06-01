@@ -20,21 +20,22 @@
                             },
                             input: require('./lib/inputprocessor'),
                             output: require('./lib/outputprocessor')
-                        }
+                        },
+                        pipes: [function (pipe, callback) {
+                            pipe.input({
+                                    'abc.txt': 'ABC',
+                                    'def.txt': 'DEF',
+                                    'xyz.txt': 'XYZ'
+                                })
+                                .transform(function (text) { return 'prefix-' + text; })
+                                .transform(function (text) { return text + '-suffix'; })
+                                .output(outputs)
+                                .run(callback);
+                        }]
                     }),
                     outputs = {};
 
-                publish.build(function (pipe, callback) {
-                    pipe.input({
-                            'abc.txt': 'ABC',
-                            'def.txt': 'DEF',
-                            'xyz.txt': 'XYZ'
-                        })
-                        .transform(function (text) { return 'prefix-' + text; })
-                        .transform(function (text) { return text + '-suffix'; })
-                        .output(outputs)
-                        .run(callback);
-                }, function (err) {
+                publish.build(function (err) {
                     callback(err, err ? null : outputs);
                 });
             },

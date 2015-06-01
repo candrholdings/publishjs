@@ -12,11 +12,16 @@
                 var callback = this.callback,
                     topic = {};
 
-                publish({ cache: false, log: false, processors: processors }).build(function (pipe, callback) {
-                    pipe.from(path.resolve(module.filename, '../from-test-files/'))
-                        .outputs(topic)
-                        .run(callback);
-                }, function (err) {
+                publish({ 
+                    cache: false,
+                    log: false,
+                    processors: processors,
+                    pipes: [function (pipe, callback) {
+                        pipe.from(path.resolve(module.filename, '../from-test-files/'))
+                            .outputs(topic)
+                            .run(callback);
+                    }]
+                }).build(function (err) {
                     callback(err, err ? null : topic);
                 });
             },
@@ -40,14 +45,19 @@
                         outputs: {}
                     };
 
-                publish({ cache: topic.cache, log: false, processors: processors }).build(function (pipe, callback) {
-                    pipe.from([
-                            pipe.inputs({ abc: 'ABC1', def: 'DEF1' }),
-                            pipe.inputs({ def: 'DEF2', xyz: 'XYZ1' }),
-                            pipe.inputs({ xyz: 'XYZ2' })
-                        ])
-                        .run(callback);
-                }, function (err, result) {
+                publish({ 
+                    cache: topic.cache,
+                    log: false,
+                    processors: processors,
+                    pipes: [function (pipe, callback) {
+                        pipe.from([
+                                pipe.inputs({ abc: 'ABC1', def: 'DEF1' }),
+                                pipe.inputs({ def: 'DEF2', xyz: 'XYZ1' }),
+                                pipe.inputs({ xyz: 'XYZ2' })
+                            ])
+                            .run(callback);
+                    }]
+                }).build(function (err, result) {
                     if (err) {
                         callback(err);
                     } else {

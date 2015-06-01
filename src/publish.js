@@ -1,4 +1,4 @@
-!function (async, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
+!function (async, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -37,6 +37,15 @@
                 })
                 .update('output', function (output) {
                     return output ? (output || '').replace(/[\\\/]/g, '/') : 'publish/';
+                })
+                .update('pipes', function (pipes) {
+                    if (!pipes) { throw new Error('pipes must be defined in options'); }
+
+                    if (typeof pipes === 'function') {
+                        pipes = [pipes];
+                    }
+
+                    return {}.toString.call(pipes) === '[object Array]' ? Immutable.List(pipes) : Immutable.Map(pipes);
                 });
         });
 
@@ -76,14 +85,13 @@
         });
     }
 
-    PublishJS.prototype.build = function (tasks, callback) {
-        var that = this;
+    require('util').inherits(PublishJS, EventEmitter);
 
-        if (typeof tasks === 'function') {
-            tasks = [tasks];
-        }
+    PublishJS.prototype.build = function (callback) {
+        var that = this,
+            pipes = that._options.get('pipes').toJS();
 
-        async.series(linq(tasks).toArray(function (fn, nameOrIndex) {
+        async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
             return function (callback) {
                 that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
@@ -93,7 +101,10 @@
                 });
             };
         }).run(), function (err, outputs) {
-            if (err) { return callback(err); }
+            if (err) {
+                that.emit('error', err);
+                return callback && callback(err);
+            }
 
             var combined = {};
 
@@ -103,7 +114,15 @@
                 });
             });
 
-            that._finalize(combined, callback);
+            that._finalize(combined, function (err, result) {
+                if (err) {
+                    that.emit('error', err);
+                    callback && callback(err);
+                } else {
+                    that.emit('build', result);
+                    callback && callback(null, result);
+                }
+            });
         });
     };
 
@@ -114,6 +133,8 @@
                 Object.getOwnPropertyNames(inputs.all).forEach(function (filename) {
                     outputs[filename] = inputs.all[filename];
                 });
+
+                result = inputs;
 
                 callback(null, outputs);
             });
@@ -154,6 +175,7 @@
     };
 }(
     require('async'),
+    require('events').EventEmitter,
     require('./caches/filesystemcache'),
     require('./util/format'),
     require('immutable'),
