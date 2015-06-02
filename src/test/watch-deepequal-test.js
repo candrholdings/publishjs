@@ -60,6 +60,26 @@
         'When comparing { abc: 123, def: { xyz: 789 } } to { abc: 123 }': {
             topic: deepEqual({ abc: 123, def: { xyz: 789 } }, { abc: 123 }),
             'should return false': shouldEqual(false)
+        },
+
+        'When comparing [123, 456, 789] to [123, 456, 789]': {
+            topic: deepEqual([123, 456, 789], [123, 456, 789]),
+            'should return true': shouldEqual(true)
+        },
+
+        'When comparing [123, 456, 789] to [123, 456, "xyz"]': {
+            topic: deepEqual([123, 456, 789], [123, 456, 'xyz']),
+            'should return false': shouldEqual(false)
+        },
+
+        'When comparing [123, 456, 789] to [123, 456]': {
+            topic: deepEqual([123, 456, 789], [123, 456]),
+            'should return false': shouldEqual(false)
+        },
+
+        'When comparing [123, 456, 789] to "abc"': {
+            topic: deepEqual([123, 456, 789], 'abc'),
+            'should return false': shouldEqual(false)
         }
     }).export(module);
 
@@ -68,4 +88,4 @@
             assert.equal(topic, expected);
         };
     }
-}(require('assert'), require('../util/watcher')._deepEqual);
+}(require('assert'), require('../util/watch')._deepEqual);
