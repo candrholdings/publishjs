@@ -61,7 +61,7 @@
                         }]
                     });
 
-                publish.build(function (err) {
+                publish.on('error', function () {}).build(function (err) {
                     callback(null, err);
                 });
             },
