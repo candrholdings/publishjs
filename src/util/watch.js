@@ -6,21 +6,13 @@
 
         EventEmitter.call(that);
 
-        that.filenames = {}.toString.call(filenames) === '[object Array]' ? filenames : [filenames];
-
         options = that.options = {
             basedir: options && typeof options.basedir === 'string' ? options.basedir : '.',
             fswatch: options && typeof options.fswatch === 'boolean' ? options.fswatch : true,
             interval: options && typeof options.interval === 'number' ? options.interval : 2000
         };
 
-        that.kick();
-
-        if (options.fswatch !== false) {
-            that._watch = fs.watch(filenames, function () {
-                that.kick();
-            });
-        }
+        that.setFilenames(filenames);
     }
 
     require('util').inherits(Watcher, EventEmitter);
@@ -56,6 +48,8 @@
     Watcher.prototype._doOnce = function (callback) {
         var that = this;
 
+        if (!that.filenames || !that.filenames.length) { return callback(); }
+
         that._busy = 1;
 
         crawl(that.filenames, { basedir: that.options.basedir }, function (err, result) {
@@ -78,8 +72,30 @@
     };
 
     Watcher.prototype.setFilenames = function (filenames) {
-        this.filenames = filenames;
-        this.kick();
+        var that = this;
+
+        if (that._fswatchers) {
+            that._fswatchers.forEach(function (fswatcher) {
+                fswatcher.close();
+            });
+
+            that._fswatchers = 0;
+        }
+
+        if (!filenames) {
+            that.filenames = [];
+            that._state = null;
+        } else {
+            that.filenames = {}.toString.call(filenames) === '[object Array]' ? filenames : [filenames];
+        }
+
+        if (that.options.fswatch !== false) {
+            that._fswatchers = that.filenames.map(function (filename) {;
+                return fs.watch(filename, that.kick.bind(that));
+            });
+        }
+
+        that.kick();
     };
 
     Watcher.prototype.close = function () {

@@ -1,4 +1,4 @@
-!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
+!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, watch) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -54,8 +54,7 @@
         that._nextActionID = 0;
 
         var actions = that._actions = {},
-            processors = that.options.processors,
-            allWatching = that._watching = {};
+            processors = that.options.processors;
 
         Object.getOwnPropertyNames(processors).forEach(function (name) {
             var processFn = processors[name];
@@ -79,7 +78,7 @@
                         args,
                         function (err, outputs, watching) {
                             watching.forEach(function (filename) {
-                                allWatching[filename] = 1;
+                                that._watching[filename] = 1;
                             });
 
                             callback(err, outputs);
@@ -98,6 +97,8 @@
         var that = this,
             pipes = that._options.get('pipes').toJS();
 
+        that._watching = {};
+
         async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
             return function (callback) {
                 that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
@@ -115,6 +116,8 @@
                 that.emit('error', err);
                 return callback && callback(err);
             }
+
+            that._watcher && that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching));
 
             var combined = {};
 
@@ -168,6 +171,22 @@
         );
     };
 
+    PublishJS.prototype.watch = function (handler) {
+        var that = this;
+
+        if (that._watcher) { that._watcher.close(); }
+
+        that._watcher = watch([], { basedir: that.options.basedir}).on('change', function (changes) {
+            if (handler) {
+                handler.call(that, changes);
+            } else {
+                that.build();
+            }
+        });
+
+        return that;
+    };
+
     module.exports = function (options) {
         options = Immutable.Map(options).withMutations(function (options) {
             options._nextPipeID = 0;
@@ -193,5 +212,6 @@
     require('async-linq'),
     require('path'),
     require('./util/pipe'),
-    require('./processor')
+    require('./processor'),
+    require('./util/watch')
 );
