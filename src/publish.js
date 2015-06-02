@@ -1,4 +1,4 @@
-!function (async, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
+!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -54,7 +54,8 @@
         that._nextActionID = 0;
 
         var actions = that._actions = {},
-            processors = that.options.processors;
+            processors = that.options.processors,
+            allWatching = that._watching = {};
 
         Object.getOwnPropertyNames(processors).forEach(function (name) {
             var processFn = processors[name];
@@ -76,7 +77,13 @@
                         options._pipeID + '.' + that._nextActionID++ + '-' + name,
                         files,
                         args,
-                        callback
+                        function (err, outputs, watching) {
+                            watching.forEach(function (filename) {
+                                allWatching[filename] = 1;
+                            });
+
+                            callback(err, outputs);
+                        }
                     );
                 } catch (ex) {
                     callback(ex);
@@ -95,8 +102,11 @@
             return function (callback) {
                 that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
 
-                fn.call(that, that._createPipe(nameOrIndex), function (err, outputs) {
+                var pipeContext = that._createPipe(nameOrIndex);
+
+                fn.call(that, pipeContext, function (err, outputs) {
                     that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n'));
+
                     callback(err, err ? null : outputs);
                 });
             };
@@ -175,6 +185,7 @@
     };
 }(
     require('async'),
+    require('./util/crawl'),
     require('events').EventEmitter,
     require('./caches/filesystemcache'),
     require('./util/format'),

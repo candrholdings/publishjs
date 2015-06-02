@@ -89,7 +89,8 @@
     }
 
     Processor.prototype.run = function (sessionID, inputs, args, callback) {
-        var that = this;
+        var that = this,
+            watching = [];
 
         this._sessionID = sessionID;
 
@@ -118,7 +119,10 @@
                     log: function (msg) {
                         that.options.log(format.log(that.name, msg));
                     },
-                    options: that.options
+                    options: that.options,
+                    watch: function (filename) {
+                        watching.push(filename);
+                    }
                 }, runArgs);
             }],
             inputs: ['files', function (callback, results) {
@@ -165,7 +169,7 @@
                 );
             }]
         }, function (err, results) {
-            callback(err, err ? null : results.outputs);
+            callback(err, err ? null : results.outputs, watching);
         });
     };
 

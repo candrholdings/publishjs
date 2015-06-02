@@ -2,7 +2,7 @@
     'use strict';
 
     require('vows').describe('PublishJS simple integration test').addBatch({
-        'when chaining a single action': {
+        'When chaining a single action': {
             topic: function () {
                 var callback = this.callback,
                     publish = require('../publish')({
@@ -39,6 +39,36 @@
 
                 assert.equal(Object.getOwnPropertyNames(topic).length, 1);
                 assert.equal(topic['abc.txt.dummy'].toString(), 'ABC.dummy');
+            }
+        },
+
+        'When build failed': {
+            topic: function () {
+                var callback = this.callback,
+                    publish = require('../publish')({
+                        cache: false,
+                        log: false,
+                        processors: {
+                            dummy: function (inputs, outputs, callback) {
+                                callback(new Error('dummy'));
+                            },
+                            input: require('./lib/inputprocessor')
+                        },
+                        pipes: [function (pipe, callback) {
+                            pipe.input({ 'abc.txt': 'ABC' })
+                                .dummy()
+                                .run(callback);
+                        }]
+                    });
+
+                publish.build(function (err) {
+                    callback(null, err);
+                });
+            },
+
+            'Should returns error object': function (topic) {
+                assert(topic);
+                assert.equal(topic.message, 'dummy');
             }
         }
     }).export(module);

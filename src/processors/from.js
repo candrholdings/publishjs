@@ -10,6 +10,7 @@
 
         dirpaths.forEach(function (dirpath, index) {
             if (typeof dirpath === 'string') {
+                that.watch(dirpath);
                 dirpaths.splice(index, 1, path.resolve(that.options.basedir || '.', dirpath));
             }
         });
