@@ -174,15 +174,19 @@
     PublishJS.prototype.watch = function (handler) {
         var that = this;
 
-        if (that._watcher) { that._watcher.close(); }
+        if (that._watcher) {
+            that._watcher.close();
+        }
 
-        that._watcher = watch([], { basedir: that.options.basedir}).on('change', function (changes) {
-            if (handler) {
-                handler.call(that, changes);
-            } else {
-                that.build();
-            }
-        });
+        if (handler !== false) {
+            that._watcher = watch([], { basedir: that.options.basedir}).on('change', function (changes) {
+                if (handler) {
+                    handler.call(that, changes);
+                } else {
+                    that.build();
+                }
+            });
+        }
 
         return that;
     };
