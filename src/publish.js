@@ -1,4 +1,4 @@
-!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, watch) {
+!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, time, watch) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -112,33 +112,43 @@
 
     require('util').inherits(PublishJS, EventEmitter);
 
-    PublishJS.prototype.log = function (message) {
-        this.options.log(format.log('publish', message));
+    PublishJS.prototype.log = function (facility, message) {
+        if (arguments.length === 1) {
+            message = arguments[0];
+            facility = 'publish';
+        }
+
+        this.options.log(format.log(facility, message));
     };
 
     PublishJS.prototype.build = function (callback) {
         var that = this,
+            startTime = Date.now(),
             pipes = that._options.get('pipes').toJS();
 
+        that.log('Build started\n');
         that._watching = {};
 
         async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
             return function (callback) {
-                that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" is started'));
+                that.log('publish', 'Build pipe "' + nameOrIndex + '" is started');
 
                 var pipeContext = that._createPipe(nameOrIndex);
 
                 fn.call(that, pipeContext, function (err, outputs) {
-                    that.options.log(format.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n'));
+                    that.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n');
 
                     callback(err, err ? null : outputs);
                 });
             };
         }).run(), function (err, outputs) {
             if (err) {
+                that.log('Build failed due to "' + err.message + '"\n' + err.stack);
                 that.emit('error', err);
                 return callback && callback.call(that, err);
             }
+
+            that.log('Build completed successfully, took ' + time.humanize(Date.now() - startTime));
 
             async.series([function (callback) {
                 that._watcher ? that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching), callback) : callback();
@@ -232,7 +242,7 @@
     module.exports.util = {
         number: require('./util/number'),
         regexp: require('./util/regexp'),
-        time: require('./util/time')
+        time: time
     };
 }(
     require('async'),
@@ -245,5 +255,6 @@
     require('path'),
     require('./util/pipe'),
     require('./processor'),
+    require('./util/time'),
     require('./util/watch')
 );
