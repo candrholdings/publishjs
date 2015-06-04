@@ -18,17 +18,17 @@
                             pipes: [function (pipe, callback) {
                                 pipe.from(path.resolve(basedir, '1'))
                                     .run(callback);
-                            }]
+                            }],
+                            watch: true
                         })
                         .on('error', function (err) {
                             callback(err);
                         })
-                        .watch()
                         .build(function (err) {
                             if (err) { return; }
 
                             this.on('build', function (outputs) {
-                                this.watch(false);
+                                this.unwatch();
                                 callback(null, outputs);
                             });
 

@@ -53,6 +53,15 @@
                     }
 
                     return mixins;
+                })
+                .update('watch', function (watch) {
+                    if (watch && typeof watch !== 'function') {
+                        watch = function () {
+                            this.build();
+                        };
+                    }
+
+                    return watch;
                 });
         });
 
@@ -102,12 +111,18 @@
                 if (name === 'onbuild') {
                     that.on('build', mixin[name].bind(that));
                 } else if (name === 'onmix') {
-                    mixin.onmix.call(mixin, that);
+                    mixin.onmix.call(that);
                 } else {
                     that[name] = mixin[name];
                 }
             });
         });
+
+        if (that.options.watch) {
+            that._watcher = watch([], { basedir: that.options.basedir }).on('change', function (changes) {
+                that.options.watch.call(that, changes);
+            });
+        }
     }
 
     require('util').inherits(PublishJS, EventEmitter);
@@ -151,7 +166,12 @@
             that.log('Build completed successfully, took ' + time.humanize(Date.now() - startTime));
 
             async.series([function (callback) {
-                that._watcher ? that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching), callback) : callback();
+                if (that._watcher) {
+                    that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching), callback);
+                    that.log('publish', 'Watching for new changes');
+                } else {
+                    callback();
+                }
             }], function (err) {
                 var combined = {};
 
@@ -208,22 +228,12 @@
         );
     };
 
-    PublishJS.prototype.watch = function (handler) {
+    PublishJS.prototype.unwatch = function () {
         var that = this;
 
         if (that._watcher) {
             that._watcher.close();
             that._watcher = null;
-        }
-
-        if (handler !== false) {
-            that._watcher = watch([], { basedir: that.options.basedir}).on('change', function (changes) {
-                if (handler) {
-                    handler.call(that, changes);
-                } else {
-                    that.build();
-                }
-            });
         }
 
         return that;
