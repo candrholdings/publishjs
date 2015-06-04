@@ -2,8 +2,7 @@
     'use strict';
 
     var processors = {
-        inputs: require('./lib/inputprocessor'),
-        outputs: require('./lib/outputprocessor')
+        inputs: require('./lib/inputprocessor')
     };
 
     require('vows').describe('From processor test').addBatch({
@@ -12,28 +11,27 @@
                 var callback = this.callback,
                     topic = {};
 
-                publish({ 
+                publish({
                     cache: false,
                     log: false,
                     processors: processors,
                     pipes: [function (pipe, callback) {
                         pipe.from(path.resolve(module.filename, '../from-test-files/'))
-                            .outputs(topic)
                             .run(callback);
                     }]
-                }).build(function (err) {
+                }).build(function (err, topic) {
                     callback(err, err ? null : topic);
                 });
             },
 
             'should returns all files': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic).length, 3);
+                assert.equal(Object.getOwnPropertyNames(topic.all).length, 3);
             },
 
             'should read all file contents': function (topic) {
-                assert.equal(topic['abc.txt'], '123');
-                assert.equal(topic['dir-def/def.txt'], '456');
-                assert.equal(topic['dir-xyz-1/dir-xyz-2/xyz.txt'], '789');
+                assert.equal(topic.all['abc.txt'], '123');
+                assert.equal(topic.all['dir-def/def.txt'], '456');
+                assert.equal(topic.all['dir-xyz-1/dir-xyz-2/xyz.txt'], '789');
             }
         },
 
@@ -45,7 +43,7 @@
                         outputs: {}
                     };
 
-                publish({ 
+                publish({
                     cache: topic.cache,
                     log: false,
                     processors: processors,
