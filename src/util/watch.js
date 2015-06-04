@@ -48,7 +48,14 @@
     Watcher.prototype._doOnce = function (callback) {
         var that = this;
 
-        if (!that.filenames || !that.filenames.length) { return callback(); }
+        if (!that.filenames || !that.filenames.length) {
+            if (that._setFilenamesCallback) {
+                that._setFilenamesCallback();
+                that._setFilenamesCallback = 0;
+            }
+
+            return callback();
+        }
 
         that._busy = 1;
 
@@ -67,12 +74,23 @@
                 that._state = result;
             }
 
+            if (that._setFilenamesCallback) {
+                that._setFilenamesCallback();
+                that._setFilenamesCallback = 0;
+            }
+
             callback(err);
         });
     };
 
-    Watcher.prototype.setFilenames = function (filenames) {
+    Watcher.prototype.setFilenames = function (filenames, callback) {
         var that = this;
+
+        if (that._setFilenamesCallback) {
+            that._setFilenamesCallback(new Error('obsoleted'));
+        }
+
+        that._setFilenamesCallback = callback;
 
         if (that._fswatchers) {
             that._fswatchers.forEach(function (fswatcher) {
@@ -84,7 +102,6 @@
 
         if (!filenames) {
             that.filenames = [];
-            that._state = null;
         } else {
             that.filenames = {}.toString.call(filenames) === '[object Array]' ? filenames : [filenames];
         }
@@ -102,7 +119,15 @@
         var that = this;
 
         that._paused = 1;
+
+        that._fswatchers &&　that._fswatchers.forEach(function (fswatcher) {
+            fswatcher.close();
+        });
+
+        that._fswatchers = 0;
+
         clearTimeout(that._next);
+
         that._watch && that._watch.close();
     };
 

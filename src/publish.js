@@ -114,27 +114,29 @@
         }).run(), function (err, outputs) {
             if (err) {
                 that.emit('error', err);
-                return callback && callback(err);
+                return callback && callback.call(that, err);
             }
 
-            that._watcher && that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching));
+            async.series([function (callback) {
+                that._watcher ? that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching), callback) : callback();
+            }], function (err) {
+                var combined = {};
 
-            var combined = {};
-
-            outputs.forEach(function (output) {
-                Object.getOwnPropertyNames(output).forEach(function (filename) {
-                    combined[filename] = output[filename];
+                outputs.forEach(function (output) {
+                    Object.getOwnPropertyNames(output).forEach(function (filename) {
+                        combined[filename] = output[filename];
+                    });
                 });
-            });
 
-            that._finalize(combined, function (err, result) {
-                if (err) {
-                    that.emit('error', err);
-                    callback && callback(err);
-                } else {
-                    that.emit('build', result);
-                    callback && callback(null, result);
-                }
+                that._finalize(combined, function (err, result) {
+                    if (err) {
+                        that.emit('error', err);
+                        callback && callback.call(that, err);
+                    } else {
+                        that.emit('build', result);
+                        callback && callback.call(that, null, result);
+                    }
+                });
             });
         });
     };
@@ -176,6 +178,7 @@
 
         if (that._watcher) {
             that._watcher.close();
+            that._watcher = null;
         }
 
         if (handler !== false) {
