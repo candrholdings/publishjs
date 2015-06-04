@@ -46,6 +46,13 @@
                     }
 
                     return {}.toString.call(pipes) === '[object Array]' ? Immutable.List(pipes) : Immutable.Map(pipes);
+                })
+                .update('mixins', function (mixins) {
+                    if (!mixins) {
+                        mixins = [];
+                    }
+
+                    return mixins;
                 });
         });
 
@@ -89,9 +96,25 @@
                 }
             };
         });
+
+        that.options.mixins.forEach(function (mixin) {
+            Object.getOwnPropertyNames(mixin).forEach(function (name) {
+                if (name === 'onbuild') {
+                    that.on('build', mixin[name].bind(that));
+                } else if (name === 'onmix') {
+                    mixin.onmix.call(mixin, that);
+                } else {
+                    that[name] = mixin[name];
+                }
+            });
+        });
     }
 
     require('util').inherits(PublishJS, EventEmitter);
+
+    PublishJS.prototype.log = function (message) {
+        this.options.log(format.log('publish', message));
+    };
 
     PublishJS.prototype.build = function (callback) {
         var that = this,
