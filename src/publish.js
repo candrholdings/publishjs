@@ -139,6 +139,8 @@
                 });
             });
         });
+
+        return that;
     };
 
     PublishJS.prototype._finalize = function (files, callback) {

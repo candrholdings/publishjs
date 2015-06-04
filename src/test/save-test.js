@@ -32,22 +32,38 @@
                                 .save('1/')
                                 .run(callback);
                         }]
-                    }).build(callback);
+                    }).build(function (err, outputs) {
+                        if (err) { return callback(err); }
+
+                        readContent('1/', function (err, disk) {
+                            callback(err, err ? null : {
+                                outputs: outputs,
+                                disk: disk
+                            });
+                        });
+                    });
+                });
+            },
+
+            'should callback with relative pathname': function (topic) {
+                assert.deepEqual(bufferToString(topic.outputs.all), {
+                    '1/abc.txt': 'ABC',
+                    '1/1/abc.txt': '1ABC',
+                    '1/1/def.txt': '1DEF',
+                    '1/2/abc.txt': '2ABC',
+                    '1/2/def.txt': '2DEF',
+                    '1/2/xyz.txt': '2XYZ'
                 });
             },
 
             'should write all 3 files to disk': function (topic) {
-                readContent('1/', function (err, outputs) {
-                    if (err) { throw err; }
-
-                    assert.deepEqual(outputs, {
-                        'abc.txt': 'ABC',
-                        '1/abc.txt': '1ABC',
-                        '1/def.txt': '1DEF',
-                        '2/abc.txt': '2ABC',
-                        '2/def.txt': '2DEF',
-                        '2/xyz.txt': '2XYZ'
-                    });
+                assert.deepEqual(topic.disk, {
+                    'abc.txt': 'ABC',
+                    '1/abc.txt': '1ABC',
+                    '1/def.txt': '1DEF',
+                    '2/abc.txt': '2ABC',
+                    '2/def.txt': '2DEF',
+                    '2/xyz.txt': '2XYZ'
                 });
             }
         },
@@ -71,17 +87,28 @@
                                 .save('2/xyz.txt')
                                 .run(callback);
                         }]
-                    }).build(callback);
+                    }).build(function (err, outputs) {
+                        if (err) { return callback(err); }
+
+                        readContent('2/', function (err, disk) {
+                            callback(err, err ? null : {
+                                outputs: outputs,
+                                disk: disk
+                            });
+                        });
+                    });
+                });
+            },
+
+            'should output with a new filename': function (topic) {
+                assert.deepEqual(bufferToString(topic.outputs.all), {
+                    '2/xyz.txt': 'ABC'
                 });
             },
 
             'should write with a new filename': function (topic) {
-                readContent('2/', function (err, outputs) {
-                    if (err) { throw err; }
-
-                    assert.deepEqual(outputs, {
-                        'xyz.txt': 'ABC'
-                    });
+                assert.deepEqual(topic.disk, {
+                    'xyz.txt': 'ABC'
                 });
             }
         }
@@ -105,6 +132,10 @@
                 return buffer.toString();
             }).run());
         });
+    }
+
+    function bufferToString(map) {
+        return linq(map).select(function (buffer) { return buffer.toString(); }).run();
     }
 }(
     require('assert'),

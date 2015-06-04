@@ -10,18 +10,17 @@
             return callback(new Error('Cannot save multiple outputs to a single file, consider append / to the output path'));
         }
 
-        dirpath = path.resolve(options.output, dirpath);
-
         linq(inputs.newOrChanged).async.select(function (entry, filename, callback) {
-            filename = isDir ? path.resolve(dirpath, filename) : dirpath;
+            var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath,
+                fullname = path.resolve(options.output, outputFilename);
 
-            mkdirp(path.dirname(filename), function (err) {
+            outputs[outputFilename] = entry;
+
+            mkdirp(path.dirname(fullname), function (err) {
                 if (err) { return callback(err); }
 
-                fs.writeFile(filename, entry, callback);
+                fs.writeFile(fullname, entry, callback);
             });
-
-            outputs[filename] = entry;
         }).run(function (err) {
             if (!err) {
                 var numAll = Object.getOwnPropertyNames(inputs.all).length,
