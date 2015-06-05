@@ -15,9 +15,16 @@
         rankFilesInplace(inputMap, 0, this.log);
 
         sorted = linq(flattenRecursive(inputMap))
-            .toArray(function (entry, filename) { return { filename: filename, entry: entry }; })
+            .toArray(function (entry, filename) {
+                return {
+                    filename: filename,
+                    buffer: entry.buffer,
+                    rank: entry.rank,
+                    unrank: entry.unrank
+                };
+            })
             .where(function (kvp) {
-                return kvp.entry.rank !== false;
+                return kvp.rank !== false;
             })
             .run()
             .sort(compareRank);
@@ -33,10 +40,19 @@
             outputFilename = path.join(path.dirname(outputFilename) + 'merge-' + path.basename(outputFilename));
         }
 
-        var merged = new BufferAppender(sorted.map(function (kvp) { return kvp.entry.buffer; })).join('\n'),
+        var merged = new BufferAppender(sorted.map(function (kvp) { return kvp.buffer; })).join('\n'),
             outputs = {};
 
-        this.log(sorted.map(function (kvp) { return kvp.filename + ' (' + number.bytes(kvp.entry.buffer.length) + ')'; }).join('\n+ ') + '\n= ' + outputFilename + ' (' + number.bytes(merged.length) + ')');
+        this.log([
+            sorted.map(function (kvp) {
+                return kvp.filename + ' (' + number.bytes(kvp.buffer.length) + ')';
+            }).join('\n+ '),
+            '\n= ',
+            outputFilename,
+            ' (',
+            number.bytes(merged.length),
+            ')'
+        ].join(''));
 
         outputs[outputFilename] = merged;
 
@@ -202,9 +218,9 @@
 
                     if (!found) {
                         if (directivePattern) {
-                            console.log('Merge   : Cannot find any files named like ' + directivePattern);
+                            log && log('Cannot find any files named like ' + directivePattern);
                         } else {
-                            console.log('Merge   : Cannot find any files named "' + directiveExact + '"');
+                            log && log('Cannot find any files named "' + directiveExact + '"');
                         }
                     }
                 });
