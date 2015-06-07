@@ -98,7 +98,7 @@
                         files,
                         args,
                         function (err, outputs, watching) {
-                            watching.forEach(function (filename) {
+                            !err && watching.forEach(function (filename) {
                                 that._watching[filename] = 1;
                             });
 
@@ -164,15 +164,18 @@
                 var pipeContext = that._createPipe(cacheKey + nameOrIndex);
 
                 fn.call(that, pipeContext, function (err, outputs) {
-                    that.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n');
+                    that.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed' : 'succeeded') + '\n');
 
                     callback(err, err ? null : outputs);
                 });
             };
         }).run(), function (err, outputs) {
             if (err) {
-                that.log('Build failed due to "' + err.message + '"\n' + err.stack);
+                that.log('Build failed due to "' + err.message + '"');
                 that.emit('error', err);
+
+                that._watcher && that.log('publish', 'Watching for new changes');
+
                 return callback && callback.call(that, err);
             }
 

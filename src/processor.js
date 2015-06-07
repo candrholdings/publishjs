@@ -88,6 +88,10 @@
         return linq(map).select(function (entry) { return entry.buffer; }).run();
     }
 
+    Processor.prototype.log = function (msg) {
+        this.options.log(format.log(this.name, msg));
+    };
+
     Processor.prototype.run = function (sessionID, inputs, args, callback) {
         var that = this,
             watching = [];
@@ -115,15 +119,17 @@
 
                 runArgs.push(callback);
 
-                that._processFn.apply({
-                    log: function (msg) {
-                        that.options.log(format.log(that.name, msg));
-                    },
-                    options: that.options,
-                    watch: function (filename) {
-                        watching.push(filename);
-                    }
-                }, runArgs);
+                try {
+                    that._processFn.apply({
+                        log: that.log.bind(that),
+                        options: that.options,
+                        watch: function (filename) {
+                            watching.push(filename);
+                        }
+                    }, runArgs);
+                } catch (ex) {
+                    callback(ex);
+                }
             }],
             inputs: ['files', function (callback, results) {
                 callback(null, linq(results.files.inputs.all).select(function (entry) {
@@ -169,6 +175,7 @@
                 );
             }]
         }, function (err, results) {
+            err && that.log(err.stack);
             callback(err, err ? null : results.outputs, watching);
         });
     };
