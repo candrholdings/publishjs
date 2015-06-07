@@ -12,6 +12,11 @@
     function PublishJS(immutableOptions) {
         var that = this;
 
+        EventEmitter.call(that);
+
+        // Should not quit on error even no listener attached to "error" event
+        that.on('error', NULL_FUNCTION);
+
         immutableOptions = immutableOptions.withMutations(function (options) {
             options
                 .set('processors',
