@@ -152,6 +152,8 @@
             pipes = that._options.get('pipes').toJS(),
             cacheKey = '';
 
+        that._nextActionID = 0;
+
         if (that.options.cacheKey) {
             cacheKey = md5(JSON.stringify(that.options.cacheKey)).substr(0, 6);
             that.log('Build started with cache key "' + cacheKey + '"\n');
@@ -261,11 +263,7 @@
     };
 
     module.exports = function (options) {
-        options = Immutable.Map(options).withMutations(function (options) {
-            options._nextPipeID = 0;
-        });
-
-        return new PublishJS(options);
+        return new PublishJS(Immutable.Map(options));
     };
 
     // Exposing some utilities
