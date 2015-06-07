@@ -112,7 +112,7 @@
         });
 
         that.options.mixins.forEach(function (mixin) {
-            Object.getOwnPropertyNames(mixin).forEach(function (name) {
+            mixin && Object.getOwnPropertyNames(mixin).forEach(function (name) {
                 if (name === 'onbuild') {
                     that.on('build', mixin[name].bind(that));
                 } else if (name === 'onmix') {
