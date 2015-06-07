@@ -1,9 +1,10 @@
-!function (async, crawl, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, time, watch) {
+!function (async, crawl, crypto, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, time, watch) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
             from: require('./processors/from'),
             merge: require('./processors/merge'),
+            noop: require('./processors/noop'),
             save: require('./processors/save')
         },
         NULL_FUNCTION = function () {};
@@ -75,6 +76,10 @@
         Object.getOwnPropertyNames(processors).forEach(function (name) {
             var processFn = processors[name];
 
+            while (processFn && typeof processFn === 'string') {
+                processFn = processors[processFn];
+            }
+
             if (typeof processFn !== 'function') {
                 throw new Error('options.processors["' + name + '"] should be a function, instead of ' + processFn);
             }
@@ -139,16 +144,24 @@
     PublishJS.prototype.build = function (callback) {
         var that = this,
             startTime = Date.now(),
-            pipes = that._options.get('pipes').toJS();
+            pipes = that._options.get('pipes').toJS(),
+            cacheKey = '';
 
-        that.log('Build started\n');
+        if (that.options.cacheKey) {
+            cacheKey = md5(JSON.stringify(that.options.cacheKey)).substr(0, 6);
+            that.log('Build started with cache key "' + cacheKey + '"\n');
+            cacheKey += '.';
+        } else {
+            that.log('Build started\n');
+        }
+
         that._watching = {};
 
         async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
             return function (callback) {
                 that.log('publish', 'Build pipe "' + nameOrIndex + '" is started');
 
-                var pipeContext = that._createPipe(nameOrIndex);
+                var pipeContext = that._createPipe(cacheKey + nameOrIndex);
 
                 fn.call(that, pipeContext, function (err, outputs) {
                     that.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed\n\n' + err.stack : 'succeeded') + '\n');
@@ -254,9 +267,20 @@
         regexp: require('./util/regexp'),
         time: time
     };
+
+    module.exports.md5 = md5;
+
+    function md5(str) {
+        var md5 = crypto.createHash('md5');
+
+        md5.update(str);
+
+        return md5.digest('hex');
+    }
 }(
     require('async'),
     require('./util/crawl'),
+    require('crypto'),
     require('events').EventEmitter,
     require('./caches/filesystemcache'),
     require('./util/format'),
