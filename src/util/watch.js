@@ -1,4 +1,4 @@
-!function (crawl, EventEmitter, fs) {
+!function (async, crawl, EventEmitter, fs, path) {
     'use strict';
 
     function Watcher(filenames, options) {
@@ -31,6 +31,8 @@
         var that = this;
 
         if (that._busy || that._paused) { return; }
+
+        clearTimeout(that._next);
 
         that._next = setTimeout(function () {
             clearTimeout(that._next);
@@ -66,6 +68,9 @@
                 if (that._state) {
                     var changes = diff(that._state, result);
 
+                    typeof changes !== 'undefined' && console.log('CHANGED:');
+                    typeof changes !== 'undefined' && console.log(changes);
+
                     typeof changes !== 'undefined' && that.emit('change', Object.getOwnPropertyNames(changes).sort());
                 } else {
                     that.emit('init');
@@ -88,9 +93,8 @@
 
         if (that._setFilenamesCallback) {
             that._setFilenamesCallback(new Error('obsoleted'));
+            that._setFilenamesCallback = 0;
         }
-
-        that._setFilenamesCallback = callback;
 
         if (that._fswatchers) {
             that._fswatchers.forEach(function (fswatcher) {
@@ -107,12 +111,22 @@
         }
 
         if (that.options.fswatch !== false) {
-            that._fswatchers = that.filenames.map(function (filename) {;
-                return fs.watch(filename, that.kick.bind(that));
-            });
-        }
+            watchAll(
+                that.filenames, 
+                function () {
+                    that.kick();
+                }, 
+                function (err, watchers) {
+                    if (err) { return callback(err); }
 
-        that.kick();
+                    that._fswatchers = watchers;
+                    that._setFilenamesCallback = callback;
+                    that.kick();
+                }
+            );
+        } else {
+            that.kick();
+        }
     };
 
     Watcher.prototype.close = function () {
@@ -130,6 +144,43 @@
 
         that._watch && that._watch.close();
     };
+
+    function watchAll(filenames, changed, callback) {
+        var watchers = [],
+            pendings = filenames.slice();
+
+        async.whilst(
+            function () { return pendings.length; },
+            function (callback) {
+                var currfilename = pendings.pop();
+
+                fs.stat(currfilename, function (err, stat) {
+                    (stat.isDirectory() || stat.isFile()) && watchers.push(fs.watch(currfilename, changed));
+
+                    if (stat.isDirectory()) {
+                        watchers.push(fs.watch(currfilename, changed));
+
+                        fs.readdir(currfilename, function (err, filenames) {
+                            !err && filenames.forEach(function (filename) {
+                                pendings.push(path.join(currfilename, filename));
+                            });
+
+                            callback(err);
+                        });
+                    } else {
+                        callback();
+                    }
+                });
+            },
+            function (err) {
+                err && watchers.forEach(function (watcher) {
+                    watcher.close();
+                });
+
+                callback(err, err ? null : watchers);
+            }
+        );
+    }
 
     function deepEqual(x, y) {
         var tx = typeof x,
@@ -206,4 +257,10 @@
 
     module.exports._deepEqual = deepEqual;
     module.exports._diff = diff;
-}(require('./crawl'), require('events').EventEmitter, require('fs'));
+}(
+    require('async'),
+    require('./crawl'),
+    require('events').EventEmitter,
+    require('fs'),
+    require('path')
+);
