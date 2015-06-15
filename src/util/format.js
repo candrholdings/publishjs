@@ -15,13 +15,25 @@
         return indentation.join('') + str;
     }
 
-    function pad(str, count, padding) {
+    function padLeft(str, count, padding) {
         count -= str.length;
         str = [str];
         padding || (padding = ' ');
 
         while (count-- > 0) {
             str.unshift(padding);
+        }
+
+        return str.join('');
+    }
+
+    function padRight(str, count, padding) {
+        count -= str.length;
+        str = [str];
+        padding || (padding = ' ');
+
+        while (count-- > 0) {
+            str.push(padding);
         }
 
         return str.join('');
@@ -43,7 +55,7 @@
 
     function log(facility, message) {
         var now = Date.now(),
-            since = pad(shortTimeHumanize(lastLog ? now - lastLog : 0), TIME_LOG_MAXLEN, ' '),
+            since = padLeft(shortTimeHumanize(lastLog ? now - lastLog : 0), TIME_LOG_MAXLEN, ' '),
             lineMax = process.stdout.columns - TIME_LOG_MAXLEN - LOG_FACILITY_MAXLEN - 7,
             lines = message.split('\n').reduce(function (lines, line) {
                 breakLines(line, lineMax).forEach(function (line) {
@@ -56,7 +68,7 @@
         lastLog = now;
 
         return lines.map(function (line, index) {
-            return index ? line ? indent('', TIME_LOG_MAXLEN) + ' | ' + indent('', LOG_FACILITY_MAXLEN) + ' | ' + indent(line, 0) : pad('', process.stdout.columns - 1, '-') : (since + ' | ' + pad(facility, LOG_FACILITY_MAXLEN) + ' | ' + line);
+            return index ? line ? indent('', TIME_LOG_MAXLEN) + ' | ' + indent('', LOG_FACILITY_MAXLEN) + ' | ' + indent(line, 0) : padLeft('', process.stdout.columns - 1, '-') : (since + ' | ' + padLeft(facility, LOG_FACILITY_MAXLEN) + ' | ' + line);
         }).join('\n');
     }
 
@@ -89,7 +101,8 @@
 
     module.exports = {
         indent: indent,
-        pad: pad,
+        padLeft: padLeft,
+        padRight: padRight,
         log: log,
         breakLines: breakLines
     };
