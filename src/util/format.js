@@ -2,7 +2,7 @@
     'use strict';
 
     var LOG_FACILITY_MAXLEN = 12,
-        TIME_LOG_MAXLEN = 8,
+        TIME_LOG_MAXLEN = 9,
         lastLog;
 
     function indent(str, count) {
@@ -55,7 +55,7 @@
 
     function log(facility, message) {
         var now = Date.now(),
-            since = padLeft(shortTimeHumanize(lastLog ? now - lastLog : 0), TIME_LOG_MAXLEN, ' '),
+            since = padLeft('+' + shortTimeHumanize(lastLog ? now - lastLog : 0), TIME_LOG_MAXLEN, ' '),
             lineMax = process.stdout.columns - TIME_LOG_MAXLEN - LOG_FACILITY_MAXLEN - 7,
             lines = message.split('\n').reduce(function (lines, line) {
                 breakLines(line, lineMax).forEach(function (line) {
@@ -68,7 +68,7 @@
         lastLog = now;
 
         return lines.map(function (line, index) {
-            return index ? line ? indent('', TIME_LOG_MAXLEN) + ' | ' + indent('', LOG_FACILITY_MAXLEN) + ' | ' + indent(line, 0) : padLeft('', process.stdout.columns - 1, '-') : (since + ' | ' + padLeft(facility, LOG_FACILITY_MAXLEN) + ' | ' + line);
+            return index ? !line && lines.length === index + 1 ? padLeft('', process.stdout.columns - 1, '-') : indent('', TIME_LOG_MAXLEN) + ' | ' + indent('', LOG_FACILITY_MAXLEN) + ' | ' + indent(line, 0) : (since + ' | ' + padLeft(facility, LOG_FACILITY_MAXLEN) + ' | ' + line);
         }).join('\n');
     }
 
@@ -90,7 +90,7 @@
             }
         }
 
-        line && lines.push(trim(line));
+        lines.push(trim(line));
 
         return lines;
     }
