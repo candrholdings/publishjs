@@ -73,7 +73,6 @@
 
         that.options = immutableOptions.toJS();
         that._options = immutableOptions;
-        that._nextActionID = 0;
 
         var actions = that._actions = {},
             processors = that.options.processors;
@@ -99,12 +98,12 @@
 
                 try {
                     processor.run(
-                        options._pipeID + '.' + that._nextActionID++ + '-' + name,
+                        options._pipeID + '.' + options._locals.actionID++ + '-' + name,
                         files,
                         args,
                         function (err, outputs, watching) {
                             !err && watching.forEach(function (filename) {
-                                that._watching[filename] = 1;
+                                that._newWatching[filename] = 1;
                             });
 
                             callback(err, outputs);
@@ -129,13 +128,28 @@
         });
 
         if (that.options.watch) {
-            that._watcher = watch([], { basedir: that.options.basedir }).on('change', function (changes) {
-                that.options.watch.call(that, changes);
-            });
+            that._watcher = watch({ basedir: that.options.basedir });
         }
     }
 
     require('util').inherits(PublishJS, EventEmitter);
+
+    PublishJS.prototype._watch = function (callback) {
+        var that = this;
+
+        if (that._watcher) {
+            that._watcher.watch(that._watching, function () {
+                var watch = that.options.watch;
+
+                watch && watch.call(that);
+            }, function (err) {
+                !err && that.log('publish', 'Watching for new changes');
+                callback && callback(err);
+            });
+        } else {
+            callback && callback();
+        }
+    };
 
     PublishJS.prototype.log = function (facility, message) {
         if (arguments.length === 1) {
@@ -152,7 +166,7 @@
             pipes = that._options.get('pipes').toJS(),
             cacheKey = '';
 
-        that._nextActionID = 0;
+        that._watcher && that._watcher.stop();
 
         if (that.options.cacheKey) {
             cacheKey = md5(JSON.stringify(that.options.cacheKey)).substr(0, 6);
@@ -162,7 +176,7 @@
             that.log('Build started\n');
         }
 
-        that._watching = {};
+        that._newWatching = {};
 
         async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
             return function (callback) {
@@ -180,31 +194,24 @@
             if (err) {
                 that.log('Build failed due to "' + err.message + '"');
                 that.emit('error', err);
-
-                that._watcher && that.log('publish', 'Watching for new changes');
+                that._watch();
 
                 return callback && callback.call(that, err);
             }
 
+            that._watching = Object.getOwnPropertyNames(that._newWatching);
             that.log('Build completed successfully, took ' + time.humanize(Date.now() - startTime));
 
-            async.series([function (callback) {
-                if (that._watcher) {
-                    that._watcher.setFilenames(Object.getOwnPropertyNames(that._watching), callback);
-                    that.log('publish', 'Watching for new changes');
-                } else {
-                    callback();
-                }
-            }], function (err) {
-                var combined = {};
+            var combined = {};
 
-                outputs.forEach(function (output) {
-                    Object.getOwnPropertyNames(output).forEach(function (filename) {
-                        combined[filename] = output[filename];
-                    });
+            outputs.forEach(function (output) {
+                Object.getOwnPropertyNames(output).forEach(function (filename) {
+                    combined[filename] = output[filename];
                 });
+            });
 
-                that._finalize(combined, function (err, result) {
+            that._finalize(combined, function (err, result) {
+                that._watch(function () {
                     if (err) {
                         that.emit('error', err);
                         callback && callback.call(that, err);
@@ -247,6 +254,7 @@
             this._actions,
             this._options
                 .set('_pipeID', pipeID)
+                .set('_locals', { actionID: 0 })
                 .toJS()
         );
     };
@@ -254,10 +262,10 @@
     PublishJS.prototype.unwatch = function () {
         var that = this;
 
-        if (that._watcher) {
-            that._watcher.close();
-            that._watcher = null;
-        }
+        that._watcher && that._watcher.stop();
+        that._watcher = 0;
+        that._options = that._options.set('watch', 0);
+        that.options = that._options.toJS();
 
         return that;
     };

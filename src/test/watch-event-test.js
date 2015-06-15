@@ -12,21 +12,23 @@
                     if (err) { return callback(err); }
 
                     try {
-                        var watcher = watch('.', { basedir: path.resolve(basedir, '1'), fswatch: false, interval: 100 }),
+                        var watcher = watch({ basedir: path.resolve(basedir, '1'), fswatch: false, interval: 100 }),
                             watchdog = setTimeout(function () {
                                 callback && callback(new Error('timeout'));
                                 callback = 0;
                             }, 10000);
 
-                        watcher.on('change', function (changes) {
+                        watcher.watch('.', function (err, changes) {
                             clearTimeout(watchdog);
 
-                            watcher.close();
+                            watcher.stop();
                             callback && callback(null, changes);
                             callback = 0;
-                        }).on('init', function () {
+                        }, function () {
+                            if (err) { return callback(err); }
+
                             fs.writeFile(path.resolve(basedir, '1', 'abc.txt'), new Buffer('123'));
-                        }, 0);
+                        });
                     } catch (ex) {
                         return callback(ex);
                     }

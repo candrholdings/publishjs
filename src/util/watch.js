@@ -1,7 +1,7 @@
 !function (async, crawl, EventEmitter, fs, path) {
     'use strict';
 
-    function Watcher(filenames, options) {
+    function Watcher(options) {
         var that = this;
 
         EventEmitter.call(that);
@@ -11,135 +11,94 @@
             fswatch: options && typeof options.fswatch === 'boolean' ? options.fswatch : true,
             interval: options && typeof options.interval === 'number' ? options.interval : 2000
         };
-
-        that.setFilenames(filenames);
     }
 
     require('util').inherits(Watcher, EventEmitter);
 
-    Watcher.prototype.kick = function () {
-        this._paused = 0;
-        this._scheduleNext(0);
-    };
-
-    Watcher.prototype.pause = function () {
-        clearTimeout(this._next);
-        this._paused = 1;
-    };
-
-    Watcher.prototype._scheduleNext = function (interval) {
+    Watcher.prototype._doOnce = function (watchToken, filenames, changed, initComplete) {
         var that = this;
 
-        if (that._busy || that._paused) { return; }
+        if (!filenames || !filenames.length) { return; }
 
-        clearTimeout(that._next);
+        var changes, fswatchers, next, crawling;
 
-        that._next = setTimeout(function () {
-            clearTimeout(that._next);
+        async.whilst(
+            function () {
+                return !changes && that._watchToken === watchToken;
+            },
+            function (callback) {
+                crawling = 1;
 
-            try {
-                that._doOnce(function () {
-                    that._scheduleNext(that.options.interval);
+                crawl(filenames, { basedir: that.options.basedir }, function (err, result) {
+                    crawling = 0;
+
+                    if (err) {
+                        initComplete && initComplete(err);
+                        initComplete = 0;
+
+                        return callback(err);
+                    }
+
+                    changes = that._state && diff(that._state, result);
+
+                    that._state = result;
+
+                    if (typeof changes !== 'undefined') {
+                        changes = Object.getOwnPropertyNames(changes).sort();
+                    } else {
+                        that.options.fswatch !== false && !fswatchers && watchAll(
+                            filenames,
+                            function () {
+                                if (!crawling) {
+                                    clearTimeout(next);
+                                    callback();
+                                }
+                            },
+                            function (err, watchers) {
+                                if (!err) {
+                                    fswatchers = watchers;
+                                }
+                            }
+                        );
+                    }
+
+                    initComplete && initComplete();
+                    initComplete = 0;
+
+                    next = setTimeout(function () {
+                        callback();
+                    }, changes ? 0 : that.options.interval);
                 });
-            } catch (ex) {
-                that._scheduleNext(that.options.interval);
-            }
-        }, interval);
-    };
+            },
+            function (err) {
+                fswatchers && fswatchers.forEach(function (watcher) {
+                    watcher.close();
+                });
 
-    Watcher.prototype._doOnce = function (callback) {
-        var that = this;
-
-        if (!that.filenames || !that.filenames.length) {
-            if (that._setFilenamesCallback) {
-                that._setFilenamesCallback();
-                that._setFilenamesCallback = 0;
-            }
-
-            return callback();
-        }
-
-        that._busy = 1;
-
-        crawl(that.filenames, { basedir: that.options.basedir }, function (err, result) {
-            that._busy = 0;
-
-            if (!err) {
-                if (that._state) {
-                    var changes = diff(that._state, result);
-
-                    typeof changes !== 'undefined' && that.emit('change', Object.getOwnPropertyNames(changes).sort());
-                } else {
-                    that.emit('init');
+                if (!err && that._watchToken !== watchToken) {
+                    err = new Error('Operation aborted');
                 }
 
-                that._state = result;
+                changed(err, err ? null : changes);
             }
-
-            if (that._setFilenamesCallback) {
-                that._setFilenamesCallback();
-                that._setFilenamesCallback = 0;
-            }
-
-            callback(err);
-        });
+        );
     };
 
-    Watcher.prototype.setFilenames = function (filenames, callback) {
+    Watcher.prototype.watch = function (filenames, changed, callback) {
         var that = this;
 
-        if (that._setFilenamesCallback) {
-            that._setFilenamesCallback(new Error('obsoleted'));
-            that._setFilenamesCallback = 0;
-        }
+        that._watchToken = {};
 
-        if (that._fswatchers) {
-            that._fswatchers.forEach(function (fswatcher) {
-                fswatcher.close();
-            });
-
-            that._fswatchers = 0;
-        }
-
-        if (!filenames) {
-            that.filenames = [];
-        } else {
-            that.filenames = {}.toString.call(filenames) === '[object Array]' ? filenames : [filenames];
-        }
-
-        if (that.options.fswatch !== false) {
-            watchAll(
-                that.filenames, 
-                function () {
-                    !that._paused && that.kick();
-                }, 
-                function (err, watchers) {
-                    if (err) { return callback(err); }
-
-                    that._fswatchers = watchers;
-                    that._setFilenamesCallback = callback;
-                    that.kick();
-                }
-            );
-        } else {
-            that.kick();
-        }
+        that._doOnce(
+            that._watchToken,
+            !filenames ? [] : {}.toString.call(filenames) === '[object Array]' ? filenames : [filenames],
+            changed,
+            callback
+        );
     };
 
-    Watcher.prototype.close = function () {
-        var that = this;
-
-        that._paused = 1;
-
-        that._fswatchers &&　that._fswatchers.forEach(function (fswatcher) {
-            fswatcher.close();
-        });
-
-        that._fswatchers = 0;
-
-        clearTimeout(that._next);
-
-        that._watch && that._watch.close();
+    Watcher.prototype.stop = function () {
+        this._watchToken = 0;
     };
 
     function watchAll(filenames, changed, callback) {
