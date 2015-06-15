@@ -287,11 +287,7 @@
     module.exports.md5 = md5;
 
     function md5(str) {
-        var md5 = crypto.createHash('md5');
-
-        md5.update(str);
-
-        return md5.digest('hex');
+        return crypto.createHash('md5').update(str).digest('hex');
     }
 }(
     require('async'),
