@@ -68,9 +68,6 @@
                 if (that._state) {
                     var changes = diff(that._state, result);
 
-                    typeof changes !== 'undefined' && console.log('CHANGED:');
-                    typeof changes !== 'undefined' && console.log(changes);
-
                     typeof changes !== 'undefined' && that.emit('change', Object.getOwnPropertyNames(changes).sort());
                 } else {
                     that.emit('init');
