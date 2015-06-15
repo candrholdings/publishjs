@@ -7,7 +7,10 @@
             callback = arguments[2];
         }
 
-        if (!linq(inputs.newOrChanged).count().run()) { return callback(null, outputs); }
+        if (!linq(inputs.newOrChanged).count().run()) {
+            this.log('No new or changed files to merge, reusing cached output');
+            return callback(null, outputs);
+        }
 
         var inputMap = sortAndSplitIntoMap(inputs.all),
             sorted;

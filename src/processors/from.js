@@ -1,4 +1,4 @@
-!function (async, fs, linq, Processor, path) {
+!function (async, fs, linq, number, Processor, path, time) {
     'use strict';
 
     module.exports = function (inputs, outputs, dirpaths, callback) {
@@ -19,15 +19,31 @@
 
         linq(dirpaths).async.select(function (dirpath, index, callback) {
             if (typeof dirpath === 'string') {
-                var displayablePath = path.relative(process.cwd(), dirpath).replace(/\\/, '/');
+                var displayablePath = path.relative(process.cwd(), dirpath).replace(/\\/, '/'),
+                    startTime = Date.now();
 
                 try {
                     crawl(dirpath, function (err, outputs) {
                         if (!err) {
-                            var outputCount = Object.getOwnPropertyNames(outputs).length,
-                                displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run();
+                            var elapsed = Date.now() - startTime,
+                                outputCount = Object.getOwnPropertyNames(outputs).length,
+                                displayableOutputs = linq(outputs).toArray(function (_, filename) { return filename; }).orderBy().take(5).run(),
+                                totalSize = linq(outputs).sum(function (buffer) { return buffer.length; }).run();
 
-                            that.log('Reading from ./' + displayablePath + ', got ' + outputCount + ' file(s), including ' + displayableOutputs.join(', ') + (outputCount !== displayableOutputs.length ? '\u2026' : ''));
+                            that.log([
+                                'Reading from ./',
+                                displayablePath,
+                                ', got ',
+                                outputCount,
+                                ' file(s), including ',
+                                displayableOutputs.join(', '),
+                                (outputCount !== displayableOutputs.length ? '\u2026' : ''),
+                                ', took ',
+                                time.humanize(elapsed),
+                                ' (',
+                                number.bytes(totalSize / elapsed * 1e3),
+                                '/s)'
+                            ].join(''));
 
                             results.push(outputs);
                         }
@@ -122,6 +138,8 @@
     require('async'),
     require('fs'),
     require('async-linq'),
+    require('../util/number'),
     require('../processor'),
-    require('path')
+    require('path'),
+    require('../util/time')
 );
