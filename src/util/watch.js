@@ -111,7 +111,7 @@
             watchAll(
                 that.filenames, 
                 function () {
-                    that.kick();
+                    !that._paused && that.kick();
                 }, 
                 function (err, watchers) {
                     if (err) { return callback(err); }
