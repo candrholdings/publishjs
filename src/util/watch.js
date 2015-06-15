@@ -1,4 +1,4 @@
-!function (async, crawl, EventEmitter, fs, path) {
+!function (async, crawl, EventEmitter, fs, path, signal) {
     'use strict';
 
     function Watcher(options) {
@@ -11,6 +11,8 @@
             fswatch: options && typeof options.fswatch === 'boolean' ? options.fswatch : true,
             interval: options && typeof options.interval === 'number' ? options.interval : 2000
         };
+
+        that._signals = [];
     }
 
     require('util').inherits(Watcher, EventEmitter);
@@ -49,10 +51,7 @@
                         that.options.fswatch !== false && !fswatchers && watchAll(
                             filenames,
                             function () {
-                                if (!crawling) {
-                                    clearTimeout(next);
-                                    callback();
-                                }
+                                !crawling && next && next.trigger();
                             },
                             function (err, watchers) {
                                 if (!err) {
@@ -65,9 +64,18 @@
                     initComplete && initComplete();
                     initComplete = 0;
 
-                    next = setTimeout(function () {
+                    if (changes) {
                         callback();
-                    }, changes ? 0 : that.options.interval);
+                    } else {
+                        that._signals.push((next = signal(that.options.interval, function () {
+                            var index = that._signals.indexOf(next);
+
+                            ~index && that._signals.splice(index, 1);
+                            next = 0;
+
+                            callback();
+                        })));
+                    }
                 });
             },
             function (err) {
@@ -99,6 +107,10 @@
 
     Watcher.prototype.stop = function () {
         this._watchToken = 0;
+
+        this._signals.forEach(function (signal) {
+            signal.trigger();
+        });
     };
 
     function watchAll(filenames, changed, callback) {
@@ -218,5 +230,6 @@
     require('./crawl'),
     require('events').EventEmitter,
     require('fs'),
-    require('path')
+    require('path'),
+    require('./signal')
 );

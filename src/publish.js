@@ -211,14 +211,16 @@
             });
 
             that._finalize(combined, function (err, result) {
+                if (err) {
+                    that.emit('error', err);
+                    callback && callback.call(that, err);
+                } else {
+                    that.emit('build', result);
+                    callback && callback.call(that, null, result);
+                }
+
                 that._watch(function () {
-                    if (err) {
-                        that.emit('error', err);
-                        callback && callback.call(that, err);
-                    } else {
-                        that.emit('build', result);
-                        callback && callback.call(that, null, result);
-                    }
+                    that.emit('watch', that._watching);
                 });
             });
         });

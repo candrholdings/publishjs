@@ -21,21 +21,19 @@
                             }],
                             watch: true
                         })
-                        .on('error', function (err) {
-                            callback(err);
-                        })
-                        .build(function (err) {
-                            if (err) { return; }
-
+                        .on('build', function (outputs) {
                             this.on('build', function (outputs) {
                                 this.unwatch();
                                 callback(null, outputs);
                             });
-
-                            process.nextTick(function () {
-                                fs.writeFile(path.resolve(basedir, '1/abc'), 'ABC');
-                            });
-                        });
+                        })
+                        .on('error', function (err) {
+                            callback(err);
+                        })
+                        .on('watch', function (watchingFiles) {
+                            fs.writeFile(path.resolve(basedir, '1/abc'), 'ABC');
+                        })
+                        .build();
                     } catch (ex) {
                         callback(ex);
                     }
