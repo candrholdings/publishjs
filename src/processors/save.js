@@ -27,9 +27,11 @@
         options || (options = {});
         options.purge = options.purge !== false;
 
-        if (!isDir && linq(outputs).count().run() > 1) {
+        if (!isDir && linq(inputs.all).count().run() > 1) {
             return callback(new Error('Cannot save multiple outputs to a single file, consider append / to the output path'));
         }
+
+        outputs = {};
 
         // Delete orphaned files from output
         async.series([
@@ -38,11 +40,7 @@
                     var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath;
 
                     fs.unlink(path.resolve(outputdir, outputFilename), function (err) {
-                        if (!err || err.code === 'ENOENT') {
-                            outputs[outputFilename] = err = null;
-                        }
-
-                        callback(err);
+                        callback(err && err.code !== 'ENOENT' ? err : null);
                     });
                 }, null).run(callback);
             },
