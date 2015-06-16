@@ -178,7 +178,7 @@
 
         that._newWatching = {};
 
-        async.series(linq(pipes).toArray(function (fn, nameOrIndex) {
+        async.series(linq(pipes).select(function (fn, nameOrIndex) {
             return function (callback) {
                 that.log('publish', 'Build pipe "' + nameOrIndex + '" is started');
 
@@ -208,13 +208,26 @@
                 return callback && callback.call(that, err);
             }
 
-            var combined = {};
+            var combined = {},
+                dupes = {};
 
-            outputs.forEach(function (output) {
+            linq(outputs).select(function (output, pipeName) {
                 linq(output).select(function (entry, filename) {
+                    (dupes[filename] || (dupes[filename] = [])).push(pipeName);
+
                     combined[filename] = entry;
                 }).run();
-            });
+            }).run();
+
+            dupes = linq(dupes).where(function (pipes) {
+                return pipes.length > 1;
+            }).run();
+
+            var dupeFilenames = Object.getOwnPropertyNames(dupes).sort();
+
+            dupeFilenames.length && that.log('Warning, some pipes are writing to the same files:\n' + dupeFilenames.map(function (filename) {
+                return filename + ' (' + dupes[filename].sort().join(', ') + ')';
+            }).join('\n'));
 
             that._watching = Object.getOwnPropertyNames(that._newWatching);
 
@@ -231,7 +244,7 @@
 
                     linq(result.newOrChanged).select(function (entry, filename) {
                         numFiles++;
-                        totalSize = entry.buffer.length;
+                        totalSize = entry.length;
                     }).run();
 
                     that.log([
