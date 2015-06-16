@@ -32,7 +32,7 @@
         }
 
         // Delete orphaned files from output
-        async.parallel([
+        async.series([
             function (callback) {
                 linq(inputs.deleted).async.select(function (filename, _, callback) {
                     var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath;
