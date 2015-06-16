@@ -7,8 +7,9 @@
             callback = arguments[2];
         }
 
-        if (!linq(inputs.newOrChanged).count().run()) {
-            this.log('No new or changed files to merge, reusing cached output');
+        // If there is a single file added, changed, or deleted, we will need to redo the merge
+        if (!inputs.deleted.length && !Object.getOwnPropertyNames(inputs.newOrChanged).length) {
+            this.log('No new, changed, or deleted files, reusing cached output');
             return callback(null, outputs);
         }
 

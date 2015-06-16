@@ -27,6 +27,10 @@
 
             'should returns no inputs as unchanged': function (topic) {
                 assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).length, 0);
+            },
+
+            'should returns no inputs as deleted': function (topic) {
+                assert.equal(topic.inputs.deleted.length, 0);
             }
         },
 
@@ -59,6 +63,10 @@
 
             'should returns cache miss as changed': function (topic) {
                 assert.equal(Object.getOwnPropertyNames(topic.inputs.newOrChanged).sort().join(','), 'changed.txt,new.txt');
+            },
+
+            'should returns no inputs as deleted': function (topic) {
+                assert.equal(topic.inputs.deleted.length, 0);
             }
         },
 
@@ -83,12 +91,16 @@
                 }, callback);
             },
 
-            'should returns all as changed': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.inputs.newOrChanged).sort().join(','), 'unchanged.txt');
+            'should returns all as unchanged': function (topic) {
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).sort().join(','), 'unchanged.txt');
             },
 
-            'should returns nothing as unchanged': function (topic) {
-                assert.equal(Object.getOwnPropertyNames(topic.inputs.unchanged).length, 0);
+            'should returns nothing as changed': function (topic) {
+                assert.equal(Object.getOwnPropertyNames(topic.inputs.newOrChanged).length, 0);
+            },
+
+            'should returns one deleted file': function (topic) {
+                assert.equal(topic.inputs.deleted.join(','), 'deleted.txt');
             }
         }
     }).export(module);

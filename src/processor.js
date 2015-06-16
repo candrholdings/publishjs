@@ -46,13 +46,15 @@
             if (err) { return callback(err); }
 
             var anyFilesDeleted = linq(inputCache).any(function (_, filename) { return !files[filename]; }).run(),
+                deleted = linq(inputCache).toArray(function (_, filename) { return filename; }).where(function (filename) { return !files[filename]; }).run(),
                 newOrChanged,
                 existingOutputs;
 
-            if (anyFilesDeleted || options.clean) {
-                // If there are any files deleted, we will need to mark all files as changed and re-run the whole processor
+            if (options.clean) {
+                // If "clean build" is on, we will need to mark all files as changed and re-run the whole processor
 
                 newOrChanged = files;
+                deleted = [];
                 existingOutputs = {};
             } else {
                 // If there are only new or changed files, we will re-use the outputs from cache
@@ -71,7 +73,8 @@
                 inputs: {
                     all: files,
                     newOrChanged: newOrChanged,
-                    unchanged: linq(files).except(newOrChanged).run()
+                    deleted: deleted,
+                    unchanged: linq(files).where(function (_, filename) { return !~deleted.indexOf(filename); }).except(newOrChanged).run()
                 },
                 outputs: {
                     existing: existingOutputs
@@ -112,7 +115,8 @@
                     {
                         all: selectBuffer(files.inputs.all),
                         newOrChanged: selectBuffer(files.inputs.newOrChanged),
-                        unchanged: selectBuffer(files.inputs.unchanged)
+                        unchanged: selectBuffer(files.inputs.unchanged),
+                        deleted: files.inputs.deleted.slice()
                     },
                     selectBuffer(files.outputs.existing)
                 );
@@ -151,7 +155,9 @@
 
                     var buffer = results.run[filename];
 
-                    if (typeof buffer === 'string') {
+                    if (!buffer) {
+                        return;
+                    } else if (typeof buffer === 'string') {
                         buffer = new Buffer(buffer);
                     } else if (!(buffer instanceof Buffer)) {
                         err = new Error('Processor#' + that.name + ' output "' + filename + '" must be either string or Buffer');

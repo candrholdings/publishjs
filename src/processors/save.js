@@ -12,6 +12,13 @@
             return callback(new Error('Cannot save multiple outputs to a single file, consider append / to the output path'));
         }
 
+        // Delete orphaned files from output
+        inputs.deleted.forEach(function (filename) {
+            var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath;
+
+            outputs[outputFilename] = null;
+        });
+
         linq(inputs.newOrChanged).async.select(function (entry, filename, callback) {
             var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath,
                 fullname = path.resolve(options.output, outputFilename);
