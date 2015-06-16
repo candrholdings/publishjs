@@ -69,9 +69,9 @@
                 elapsed = Date.now() - startTime;
 
             if (numAll && !numNewOrChanged) {
-                that.log('No new changes to save to ./' + displayPath + ' because all ' + numAll + ' file(s) were unchanged');
+                that.log('Nothing to save to ./' + displayPath + ' because all ' + numAll + ' file(s) were unchanged');
             } else if (!numAll) {
-                that.log('No files to save to ./' + displayPath);
+                that.log('Nothing to save to ./' + displayPath + ' because no input files');
             } else {
                 that.log([
                     'Saving ',
@@ -90,6 +90,8 @@
                     ')'
                 ].join(''));
             }
+
+            inputs.deleted && that.log('Purged ' + inputs.deleted + ' file(s) from disk');
 
             callback(null, outputs);
         });

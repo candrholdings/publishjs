@@ -182,10 +182,19 @@
             return function (callback) {
                 that.log('publish', 'Build pipe "' + nameOrIndex + '" is started');
 
-                var pipeContext = that._createPipe(cacheKey + nameOrIndex);
+                var pipeContext = that._createPipe(cacheKey + nameOrIndex),
+                    startTime = Date.now();
 
                 fn.call(that, pipeContext, function (err, outputs) {
-                    that.log('publish', 'Build pipe "' + nameOrIndex + '" has ' + (err ? 'failed' : 'succeeded') + '\n');
+                    that.log('publish', [
+                        'Build pipe "',
+                        nameOrIndex,
+                        '" has ',
+                        (err ? 'failed' : 'succeeded'),
+                        ', took ',
+                        time.humanize(Date.now() - startTime),
+                        '\n'
+                    ].join(''));
 
                     callback(err, err ? null : outputs);
                 });
