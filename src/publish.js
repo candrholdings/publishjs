@@ -1,4 +1,4 @@
-!function (async, crawl, crypto, EventEmitter, FileSystemCache, format, Immutable, linq, path, Pipe, Processor, time, watch) {
+!function (async, crawl, crypto, EventEmitter, FileSystemCache, format, Immutable, linq, number, path, Pipe, Processor, time, watch) {
     'use strict';
 
     var DEFAULT_PROCESSORS = {
@@ -208,16 +208,15 @@
                 return callback && callback.call(that, err);
             }
 
-            that._watching = Object.getOwnPropertyNames(that._newWatching);
-            that.log('Build completed successfully, took ' + time.humanize(Date.now() - startTime));
-
             var combined = {};
 
             outputs.forEach(function (output) {
-                Object.getOwnPropertyNames(output).forEach(function (filename) {
-                    combined[filename] = output[filename];
-                });
+                linq(output).select(function (entry, filename) {
+                    combined[filename] = entry;
+                }).run();
             });
+
+            that._watching = Object.getOwnPropertyNames(that._newWatching);
 
             that._finalize(combined, function (err, result) {
                 if (err) {
@@ -226,6 +225,22 @@
                 } else {
                     that.emit('build', result);
                     callback && callback.call(that, null, result);
+
+                    var numFiles = 0,
+                        totalSize = 0;
+
+                    linq(result.newOrChanged).select(function (entry, filename) {
+                        numFiles++;
+                        totalSize = entry.buffer.length;
+                    }).run();
+
+                    that.log([
+                        'Build completed successfully, updated ',
+                        numFiles,
+                        ' file(s) of ',
+                        number.bytes(totalSize),
+                        ', took ' + time.humanize(Date.now() - startTime)
+                    ].join(''));
                 }
 
                 that._watch(function () {
@@ -288,7 +303,7 @@
     // Exposing some utilities
 
     module.exports.util = {
-        number: require('./util/number'),
+        number: number,
         regexp: require('./util/regexp'),
         time: time
     };
@@ -307,6 +322,7 @@
     require('./util/format'),
     require('immutable'),
     require('async-linq'),
+    require('./util/number'),
     require('path'),
     require('./util/pipe'),
     require('./processor'),

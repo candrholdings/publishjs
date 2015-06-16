@@ -91,7 +91,7 @@
                 ].join(''));
             }
 
-            inputs.deleted && that.log('Purged ' + inputs.deleted.length + ' file(s) from disk');
+            inputs.deleted.length && that.log('Purged ' + inputs.deleted.length + ' file(s) from disk');
 
             callback(null, outputs);
         });
