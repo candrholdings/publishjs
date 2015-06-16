@@ -39,7 +39,7 @@
 
                     fs.unlink(path.resolve(outputdir, outputFilename), function (err) {
                         if (!err || err.code === 'ENOENT') {
-                            outputs[outputFilename] = null;
+                            outputs[outputFilename] = err = null;
                         }
 
                         callback(err);
