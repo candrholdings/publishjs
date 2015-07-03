@@ -181,7 +181,7 @@
                 );
             }]
         }, function (err, results) {
-            err && that.log(err.stack);
+            err && that.log(err.stack || err.message || '');
             callback(err, err ? null : results.outputs, watching);
         });
     };
