@@ -40,8 +40,10 @@
         }
 
         if (!outputFilename) {
-            outputFilename = linq(sorted).first(function (kvp) { return !isDirective(kvp.filename); }).run() || 'unnamed';
-            outputFilename = path.join(path.dirname(outputFilename) + 'merge-' + path.basename(outputFilename));
+            var firstFileIndex = linq(sorted).first(function (kvp) { return !isDirective(kvp.filename); }).run();
+
+            outputFilename = typeof firstFileIndex === 'number' ? sorted[firstFileIndex].filename : 'unnamed';
+            outputFilename = path.join(path.dirname(outputFilename), 'merge-' + path.basename(outputFilename));
         }
 
         var merged = new BufferAppender(sorted.map(function (kvp) { return kvp.buffer; })).join('\n'),
