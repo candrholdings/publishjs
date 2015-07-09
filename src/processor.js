@@ -69,17 +69,32 @@
                 existingOutputs = outputCache;
             }
 
-            callback(null, {
-                inputs: {
-                    all: files,
-                    newOrChanged: newOrChanged,
-                    deleted: deleted,
-                    unchanged: linq(files).where(function (_, filename) { return !~deleted.indexOf(filename); }).except(newOrChanged).run()
-                },
-                outputs: {
-                    existing: existingOutputs
-                }
-            });
+            // TODO: We use async version despite everything is sync
+            //       This is because a bug in async-linq, https://github.com/candrholdings/async-linq/issues/2
+
+            linq(files)
+                .async
+                .where(function (_, filename, callback) { 
+                    callback(null, !~deleted.indexOf(filename));
+                })
+                .except(newOrChanged, function (left, right, leftIndex, rightIndex, callback) {
+                    process.nextTick(function () {
+                        callback(null, left === right);
+                    });
+                })
+                .run(function (err, unchanged) {
+                    callback(null, {
+                        inputs: {
+                            all: files,
+                            newOrChanged: newOrChanged,
+                            deleted: deleted,
+                            unchanged: unchanged
+                        },
+                        outputs: {
+                            existing: existingOutputs
+                        }
+                    });
+                });
         });
     };
 
