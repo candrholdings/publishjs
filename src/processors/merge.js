@@ -187,6 +187,8 @@
                 file.rank = false;
 
                 file.buffer.toString().split('\n').forEach(function (line, lineNumber) {
+                    line = line.replace(/(^\s+)|(\s+$)/g, '');
+
                     if (!line) { return; }
 
                     var directive = parseDirectiveLine(line),

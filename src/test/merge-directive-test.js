@@ -4,7 +4,7 @@
     require('vows').describe('Test merging directives').addBatch({
         'When excluding a file': {
             topic: runMerge({
-                '/.merge': '-3',
+                '/.merge': '\r\n-3\r\n\r\n',
                 '/1': '123',
                 '/2': '456',
                 '/3': '789'
