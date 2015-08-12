@@ -123,6 +123,8 @@
                 var currfilename = pendings.pop();
 
                 fs.stat(currfilename, function (err, stat) {
+                    if (err) { return callback(err); }
+
                     (stat.isDirectory() || stat.isFile()) && watchers.push(fs.watch(currfilename, changed));
 
                     if (stat.isDirectory()) {
