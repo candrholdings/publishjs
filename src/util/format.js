@@ -73,26 +73,66 @@
     }
 
     function breakLines(line, max) {
-        var lines = [],
-            fragment,
-            i;
+        var output = [],
+            currLine = [],
+            words = line.split(' '),
+            word,
+            brokenWord,
+            lineLength,
+            pattern = /\u001b\[.*?[A-Za-z]/g;
 
-        while (line.length > max) {
-            for (i = max - 1; i >= 0; i--) {
-                if (/\s/.test(line.charAt(i)) || !i) {
-                    if (!i) { i = max; }
+        while (words.length) {
+            word = words.shift();
 
-                    lines.push(trim(line.substr(0, i)));
-                    line = trim(line.substr(i));
+            currLine.push(word);
 
-                    break;
+            var lineLength = currLine.map(function (word) {
+                return word.replace(pattern, '');
+            }).join(' ').length;
+
+            if (lineLength > max) {
+                currLine.pop();
+
+                if (currLine.length) {
+                    output.push(currLine);
+                    currLine = [];
+                    words.unshift(word);
+                } else {
+                    brokenWord = breakWord(word, max);
+                    output.push([brokenWord]);
+                    words.unshift(word.substr(brokenWord.length));
                 }
             }
         }
 
-        lines.push(trim(line));
+        currLine.length && output.push(currLine);
 
-        return lines;
+        return output.map(function (line) {
+            return line.join(' ');
+        });
+    }
+
+    function breakWord(word, max) {
+        var pattern = /^\u001b\[.*?[A-Za-z]/,
+            match,
+            letters = [],
+            left = max,
+            index = 0;
+
+        while (left > 0) {
+            match = pattern.exec(word.substr(index));
+
+            if (match) {
+                letters.push(match[0]);
+                index += match[0].length;
+            } else {
+                letters.push(word.charAt(index));
+                index++;
+                left--;
+            }
+        }
+
+        return letters.join('');
     }
 
     function trim(str) {
@@ -104,6 +144,7 @@
         padLeft: padLeft,
         padRight: padRight,
         log: log,
-        breakLines: breakLines
+        breakLines: breakLines,
+        breakWord: breakWord
     };
 }(require('./time'));
