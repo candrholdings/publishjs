@@ -1,6 +1,6 @@
 {
   "name": "publishjs",
-  "version": "0.0.2-dev",
+  "version": "0.0.3",
   "description": "Website build pipeline system",
   "keywords": [
     "publish",
