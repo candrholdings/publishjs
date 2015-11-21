@@ -88,41 +88,30 @@
     };
 
     function crawl(basedir, callback) {
-        var dirs = ['./'],
+        var pendings = ['./'],
             result = {};
 
         async.whilst(
-            function () { return dirs.length; },
+            function () { return pendings.length; },
             function (callback) {
-                var dir = dirs.pop();
+                var pending = pendings.pop(),
+                    fullname = path.resolve(basedir, pending);
 
-                fs.readdir(path.resolve(basedir, dir), function (err, files) {
-                    if (err) { return callback(err); }
-
-                    files = linq(files).toDictionary(function (filename) {
-                        return path.join(dir, filename).replace(/\\/g, '/');
-                    }).run();
-
-                    linq(files)
-                        .async
-                        .select(function (_, filename, callback) {
-                            fs.stat(path.resolve(basedir, filename), callback);
-                        })
-                        .run(function (err, statsmap) {
+                fs.stat(fullname, (err, stat) => {
+                    if (stat.isFile()) {
+                        result[pending] = 0;
+                        callback();
+                    } else {
+                        fs.readdir(fullname, (err, files) => {
                             if (err) { return callback(err); }
 
-                            Object.getOwnPropertyNames(statsmap).forEach(function (filename) {
-                                var stat = statsmap[filename];
-
-                                if (stat.isFile()) {
-                                    result[filename] = 0;
-                                } else if (stat.isDirectory()) {
-                                    dirs.push(filename);
-                                }
+                            files.forEach(file => {
+                                pendings.push(path.join(pending, file).replace(/\\/g, '/'));
                             });
 
                             callback();
                         });
+                    }
                 });
             },
             function (err) {
