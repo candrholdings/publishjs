@@ -171,18 +171,18 @@
         if (that.options.cacheKey) {
             cacheKey = md5(JSON.stringify(that.options.cacheKey)).substr(0, 6);
             that.log('Build started with cache key "' + cacheKey + '"\n');
-            cacheKey += '.';
         } else {
             that.log('Build started\n');
         }
 
+        that._options.get('cache').startSession(cacheKey);
         that._newWatching = {};
 
         async.series(linq(pipes).select(function (fn, nameOrIndex) {
             return function (callback) {
                 that.log('publish', 'Build pipe "' + nameOrIndex + '" is started');
 
-                var pipeContext = that._createPipe(cacheKey + nameOrIndex),
+                var pipeContext = that._createPipe(nameOrIndex),
                     startTime = Date.now();
 
                 fn.call(that, pipeContext, function (err, outputs) {
@@ -246,6 +246,8 @@
                         numFiles++;
                         totalSize = entry.length;
                     }).run();
+
+                    that._options.get('cache').endSession();
 
                     that.log([
                         'Build completed successfully, updated ',
