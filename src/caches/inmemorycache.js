@@ -17,7 +17,7 @@
     }
   };
 
-  InMemoryCache.prototype.stopSession = function () {
+  InMemoryCache.prototype.endSession = function () {
   };
 
   InMemoryCache.prototype.load = function (name, callback) {
@@ -32,7 +32,7 @@
     callback();
   };
 
-  module.exports = function (options) { 
+  module.exports = function (options) {
     return new InMemoryCache(options);
   };
 

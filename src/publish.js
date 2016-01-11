@@ -175,7 +175,9 @@
             that.log('Build started\n');
         }
 
-        that._options.get('cache').startSession(cacheKey);
+        let cache = that._options.get('cache');
+
+        cache && cache.startSession(cacheKey);
         that._newWatching = {};
 
         async.series(linq(pipes).select(function (fn, nameOrIndex) {
@@ -247,7 +249,7 @@
                         totalSize = entry.length;
                     }).run();
 
-                    that._options.get('cache').endSession();
+                    cache && cache.endSession();
 
                     that.log([
                         'Build completed successfully, updated ',

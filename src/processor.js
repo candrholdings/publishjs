@@ -69,32 +69,20 @@
                 existingOutputs = outputCache;
             }
 
-            // TODO: We use async version despite everything is sync
-            //       This is because a bug in async-linq, https://github.com/candrholdings/async-linq/issues/2
+            let notDeleted = filter(files, filename => !~deleted.indexOf(filename)),
+                unchanged = except(notDeleted, newOrChanged);
 
-            linq(files)
-                .async
-                .where(function (_, filename, callback) { 
-                    callback(null, !~deleted.indexOf(filename));
-                })
-                .except(newOrChanged, function (left, right, leftIndex, rightIndex, callback) {
-                    process.nextTick(function () {
-                        callback(null, left === right);
-                    });
-                })
-                .run(function (err, unchanged) {
-                    callback(null, {
-                        inputs: {
-                            all: files,
-                            newOrChanged: newOrChanged,
-                            deleted: deleted,
-                            unchanged: unchanged
-                        },
-                        outputs: {
-                            existing: existingOutputs
-                        }
-                    });
-                });
+            callback(null, {
+                inputs: {
+                    all: files,
+                    newOrChanged,
+                    deleted,
+                    unchanged
+                },
+                outputs: {
+                    existing: existingOutputs
+                }
+            });
         });
     };
 
@@ -207,6 +195,40 @@
         md5.update(typeof bufferOrString === 'string' ? new Buffer(bufferOrString) : bufferOrString);
 
         return md5.digest('hex');
+    }
+
+    function filter(map, predicate) {
+        return Object.keys(map).reduce((result, name) => {
+            let value = map[name];
+
+            if (predicate(value, name)) {
+                result[name] = value;
+            }
+
+            return result;
+        }, {});
+    }
+
+    function except(big, small, equality) {
+        equality || (equality = (left, right) => left === right);
+
+        return Object.keys(big).reduce((intersection, name) => {
+            let value = big[name];
+
+            if (!contains(small, value, equality)) {
+                intersection[name] = value;
+            }
+
+            return intersection;
+        }, {});
+    }
+
+    function contains(map, target, equality) {
+        for (let keys = Object.keys(map), index = 0, length = keys.length; index < length; index++) {
+            if (equality(target, map[keys[index]])) {
+                return true;
+            }
+        }
     }
 
     module.exports = Processor;
