@@ -78,6 +78,16 @@
   FileSystemCache.prototype.save = function (name, inputs, outputs, callback) {
     var that = this;
 
+    let cached = this._lastSession[name];
+
+    if (
+      cached &&
+      mapEqual(cached.inputs, inputs) &&
+      mapEqual(selectMap(cached.outputs, output => output.md5), selectMap(outputs, output => output.md5))
+    ) {
+      return callback();
+    }
+
     mkdirp(that._tempdir, function (err) {
       if (err) { return callback(err); }
 
@@ -106,6 +116,50 @@
   };
 
   module.exports.FileSystemCache = FileSystemCache;
+
+  function mapEqual(left, right, equality) {
+    equality || (equality = (left, right) => left === right);
+    
+    const keys = Object.keys(left).sort();
+
+    if (!arrayEqual(keys, Object.keys(right).sort())) {
+      return false;
+    }
+
+    for (let index = 0, length = keys.length; index < length; index++) {
+      let name = keys[index];
+
+      if (left[name] !== right[name]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function arrayEqual(left, right) {
+    let length = left.length;
+
+    if (length !== right.length) {
+      return false;
+    }
+
+    for (let index = 0; index < length; index++) {
+      if (left[index] !== right[index]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function selectMap(map, selector) {
+    return Object.keys(map).reduce((result, name) => {
+      result[name] = selector(map[name], name);
+
+      return result;
+    }, {});
+  }
 }(
   require('../cache'),
   require('fs'),
