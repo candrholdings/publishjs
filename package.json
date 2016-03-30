@@ -1,6 +1,6 @@
 {
   "name": "publishjs",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Website build pipeline system",
   "keywords": [
     "publish",
@@ -20,6 +20,7 @@
   "dependencies": {
     "async": "^0.9.2",
     "async-linq": "^1.0.2",
+    "bluebird": "^3.1.1",
     "immutable": "^3.7.3",
     "mkdirp": "^0.5.1",
     "rmdir": "^1.1.0"
