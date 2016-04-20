@@ -31,8 +31,6 @@
       return callback(new Error('Cannot save multiple outputs to a single file, consider append / to the output path'));
     }
 
-    outputs = {};
-
     // Delete orphaned files from output
     async.series([
       function (callback) {
@@ -49,7 +47,6 @@
           var outputFilename = isDir ? path.join(dirpath, filename).replace(/\\/g, '/') : dirpath,
             fullname = path.resolve(outputdir, outputFilename);
 
-          outputs[filename] = entry;
           totalSize += entry.length;
 
           mkdirp(path.dirname(fullname), function (err) {
@@ -91,7 +88,7 @@
 
       inputs.deleted.length && that.log('Purged ' + inputs.deleted.length + ' file(s) from disk');
 
-      callback(null, outputs);
+      callback(null, inputs.all);
     });
   };
 }(
